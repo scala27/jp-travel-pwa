@@ -19,7 +19,7 @@
 </head>
 <body class="bg-slate-100 text-slate-800 pb-24">
 
-  <!-- 頂部導覽列（防手機端換行優化） -->
+  <!-- 頂部導覽列 -->
   <header class="bg-slate-900 text-white px-3.5 py-3 sticky top-0 z-30 shadow-md flex justify-between items-center gap-2">
     <div class="flex items-center gap-2.5 min-w-0 flex-1">
       <img src="./icon.svg" alt="icon" class="w-8 h-8 rounded-lg shrink-0 shadow-xs" />
@@ -102,9 +102,10 @@
   </main>
 
   <!-- Loading 遮罩 -->
-  <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex flex-col items-center justify-center text-white">
+  <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex flex-col items-center justify-center text-white px-6 text-center">
     <div class="loader mb-3"></div>
-    <p id="loadingText" class="text-sm font-medium">AI 正在解析收據與上傳雲端...</p>
+    <p id="loadingText" class="text-sm font-medium">AI 正在解析收據...</p>
+    <p id="loadingSubText" class="text-xs text-slate-300 mt-1"></p>
   </div>
 
   <!-- 新增 / 編輯記帳 Modal -->
@@ -184,7 +185,6 @@
         <div>
           <label class="block text-xs font-bold text-slate-600 mb-1">消費日期與地點</label>
           <div class="grid grid-cols-2 gap-2">
-            <!-- 原生日期選擇器，避免格式輸入錯誤 -->
             <input type="date" id="f_date" required class="w-full border rounded-xl px-2.5 py-1.5 text-xs text-slate-700 bg-white" />
             <input type="text" id="f_location" class="w-full border rounded-xl px-3 py-1.5 text-xs text-slate-600" placeholder="GPS 或地標（選填）" />
           </div>
@@ -411,29 +411,40 @@
       if (!file) return;
 
       captureGps();
-      showLoading('壓縮收據照片並呼叫 Gemini AI 辨識中...');
+      showLoading('壓縮收據照片中...', '最佳化傳輸體積以加速辨識');
 
+      let compressedBase64 = '';
       try {
-        const compressedBase64 = await compressImage(file, 1024, 0.8);
+        // 壓縮至 768px / 0.65 品質（約 70KB），大幅縮短行動網路上傳時間
+        compressedBase64 = await compressImage(file, 768, 0.65);
 
         if (!navigator.onLine) {
           hideLoading();
           openManualModal();
           document.getElementById('receiptPreview').src = compressedBase64;
           document.getElementById('previewBox').classList.remove('hidden');
-          alert('目前處於離線狀態，請先手動輸入金額，連線後將自動同步！');
+          alert('目前處於離線狀態，請先手動輸入金額！');
           return;
         }
+
+        const kbSize = Math.round((compressedBase64.length * 3) / 4 / 1024);
+        showLoading(`呼叫 Gemini AI 辨識中 (${kbSize} KB)...`, '若超過 25 秒將自動切換為手動輸入');
+
+        // 加入 25 秒強制逾時保護，絕不再無止盡卡住
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 25000);
 
         const res = await fetch(getGasUrl(), {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          signal: controller.signal,
           body: JSON.stringify({
             action: 'analyze_receipt',
             image_base64: compressedBase64,
             mime_type: 'image/jpeg'
           })
         });
+        clearTimeout(timeoutId);
 
         const json = await res.json();
         hideLoading();
@@ -470,12 +481,22 @@
             ).join('');
           }
         } else {
-          alert('AI 辨識失敗，請改為手動輸入：' + json.message);
+          alert('AI 辨識失敗，請改為手動輸入：\n' + json.message);
           openManualModal();
+          document.getElementById('receiptPreview').src = compressedBase64;
+          document.getElementById('previewBox').classList.remove('hidden');
         }
       } catch (err) {
         hideLoading();
-        alert('發生錯誤：' + err.message);
+        const msg = err.name === 'AbortError' 
+          ? '行動網路上傳逾時（超過 25 秒），已為您保留收據照片，請直接手動輸入金額即可！' 
+          : '連線發生異常：' + err.message;
+        alert(msg);
+        openManualModal();
+        if (compressedBase64) {
+          document.getElementById('receiptPreview').src = compressedBase64;
+          document.getElementById('previewBox').classList.remove('hidden');
+        }
       } finally {
         event.target.value = '';
       }
@@ -523,7 +544,6 @@
       document.getElementById('txModal').classList.remove('hidden');
     }
 
-    // 開啟編輯既有紀錄視窗
     function openEditModal(txId) {
       const tx = appState.transactions.find(item => item.tx_id === txId);
       if (!tx) return;
@@ -802,8 +822,9 @@
       }
     }
 
-    function showLoading(text) {
+    function showLoading(text, subText = '') {
       document.getElementById('loadingText').textContent = text;
+      document.getElementById('loadingSubText').textContent = subText;
       document.getElementById('loadingOverlay').classList.remove('hidden');
     }
     function hideLoading() {
