@@ -3,10 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>日本旅遊 AI 記帳本</title>
+  <title>旅遊記帳</title>
   <link rel="manifest" href="./manifest.json" />
+  <link rel="icon" type="image/svg+xml" href="./icon.svg" />
+  <link rel="apple-touch-icon" href="./icon.svg" />
   <meta name="theme-color" content="#0f172a" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-title" content="旅遊記帳" />
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -18,9 +21,12 @@
 
   <!-- 頂部導覽列 -->
   <header class="bg-slate-900 text-white px-4 py-3 sticky top-0 z-30 shadow-md flex justify-between items-center">
-    <div>
-      <h1 id="tripTitle" class="text-lg font-bold tracking-wide">🇯🇵 載入旅程中...</h1>
-      <p id="syncStatus" class="text-xs text-slate-400">連線狀態檢查中</p>
+    <div class="flex items-center gap-2.5">
+      <img src="./icon.svg" alt="icon" class="w-8 h-8 rounded-lg shadow-xs" />
+      <div>
+        <h1 id="tripTitle" class="text-base font-bold tracking-wide">旅遊記帳</h1>
+        <p id="syncStatus" class="text-[11px] text-slate-400">連線狀態檢查中</p>
+      </div>
     </div>
     <div class="flex gap-2">
       <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700">
@@ -45,9 +51,9 @@
     <section class="bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-2xl p-5 shadow-lg">
       <div class="flex justify-between items-start">
         <div>
-          <p class="text-xs text-slate-400">本趟實質總花費（台幣）</p>
+          <p class="text-xs text-slate-400">本趟實質總花費（含機酒台幣＋當地日幣）</p>
           <p id="totalTwd" class="text-3xl font-extrabold mt-1">NT$ 0</p>
-          <p id="totalJpy" class="text-sm text-slate-300 mt-1">日幣累計：¥ 0</p>
+          <p id="totalJpy" class="text-sm text-slate-300 mt-1">當地日幣累計：¥ 0</p>
         </div>
         <div id="pendingTaxBadge" class="hidden bg-rose-500/20 border border-rose-400/40 text-rose-200 px-3 py-1.5 rounded-xl text-right">
           <p class="text-[11px]">待退稅金額</p>
@@ -70,14 +76,16 @@
       </div>
     </section>
 
-    <!-- 三大快速操作鈕 -->
-    <section class="grid grid-cols-3 gap-2.5">
-      <label class="col-span-2 bg-blue-600 active:bg-blue-700 text-white rounded-2xl p-3.5 shadow-md flex items-center justify-center gap-2 cursor-pointer font-bold text-base">
-        <span>📸 拍收據 AI 辨識</span>
+    <!-- 等寬對稱雙操作鈕 -->
+    <section class="grid grid-cols-2 gap-3">
+      <label class="bg-blue-600 active:bg-blue-700 text-white rounded-2xl h-14 px-3 shadow-md flex items-center justify-center gap-2 cursor-pointer font-bold text-sm select-none">
+        <span class="text-lg">📸</span>
+        <span>拍收據 AI 辨識</span>
         <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptCapture(event)" />
       </label>
-      <button onclick="openManualModal()" class="bg-white active:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl p-3.5 shadow-sm flex flex-col items-center justify-center font-bold text-sm">
-        <span>✍️ 手動/儲值</span>
+      <button onclick="openManualModal()" class="bg-white active:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl h-14 px-3 shadow-sm flex items-center justify-center gap-2 font-bold text-sm select-none">
+        <span class="text-lg">✍️</span>
+        <span>手動 / 儲值</span>
       </button>
     </section>
 
@@ -119,28 +127,30 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1">支付方式</label>
-            <select id="f_payment" onchange="togglePaymentFields()" class="w-full border rounded-xl px-3 py-2 text-sm bg-slate-50 font-medium">
+            <select id="f_payment" onchange="togglePaymentFields()" class="w-full border rounded-xl px-2.5 py-2 text-sm bg-slate-50 font-medium">
               <option value="日幣現金">💴 日幣現金</option>
               <option value="IC卡">🚃 交通 IC 卡扣款</option>
-              <option value="信用卡">💳 信用卡</option>
-              <option value="IC卡儲值">➕ 現金儲值 IC 卡</option>
+              <option value="日幣信用卡">💳 日幣信用卡 (海外)</option>
+              <option value="台幣信用卡">🇹🇼 台幣信用卡 (機酒/訂購)</option>
+              <option value="台幣現金">💵 台幣現金</option>
+              <option value="IC卡儲值">➕ 日幣現金儲值 IC 卡</option>
             </select>
           </div>
           <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">日幣金額 (¥)</label>
-            <input type="number" id="f_jpy" required oninput="updateTwdEstimate()" class="w-full border rounded-xl px-3 py-2 text-base font-bold text-blue-600" placeholder="例如 1580" />
+            <label id="amountLabel" class="block text-xs font-bold text-slate-600 mb-1">日幣金額 (¥)</label>
+            <input type="number" id="f_amount" required oninput="updateTwdEstimate()" class="w-full border rounded-xl px-3 py-2 text-base font-bold text-blue-600" placeholder="例如 1580" />
           </div>
         </div>
 
         <div class="flex justify-between items-center bg-blue-50 px-3 py-2 rounded-xl text-xs">
-          <span class="text-blue-800">預估台幣成本：<strong id="twdEstimateText" class="text-sm">NT$ 0</strong></span>
+          <span class="text-blue-800">計入總花費成本：<strong id="twdEstimateText" class="text-sm">NT$ 0</strong></span>
           <span id="gpsBadge" class="text-slate-500">📍 GPS 定位中...</span>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1">店家 / 項目名稱</label>
-            <input type="text" id="f_merchant" required class="w-full border rounded-xl px-3 py-2 text-sm" placeholder="例如：LAWSON 那霸店" />
+            <input type="text" id="f_merchant" required class="w-full border rounded-xl px-3 py-2 text-sm" placeholder="例如：星宇航空機票 / LAWSON" />
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1">消費分類</label>
@@ -154,7 +164,8 @@
           </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3">
+        <!-- 日本退稅區塊（台幣支付時自動隱藏） -->
+        <div id="taxSection" class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1">日本退稅狀態</label>
             <select id="f_tax_status" onchange="toggleRefundInput()" class="w-full border rounded-xl px-3 py-2 text-sm bg-slate-50">
@@ -190,7 +201,7 @@
     </div>
   </div>
 
-  <!-- 設定 Modal (包含 GAS Web App URL 與匯率設定) -->
+  <!-- 設定 Modal -->
   <div id="settingsModal" class="hidden fixed inset-0 bg-slate-900/60 z-40 flex items-center justify-center p-4">
     <div class="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-3.5">
       <div class="flex justify-between items-center border-b pb-2">
@@ -218,7 +229,7 @@
           <input type="number" step="0.0001" id="s_ic_rate" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-slate-600 mb-1">刷卡實質係數</label>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">日幣刷卡係數</label>
           <input type="number" step="0.0001" id="s_card_rate" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
         </div>
       </div>
@@ -241,16 +252,14 @@
   </div>
 
   <script>
-    // 預設填寫你的 GAS 網址，或透過介面設定存入 localStorage
     const DEFAULT_GAS_URL = '請在此貼上你部署後的_GAS_WEB_APP_URL';
     let appState = {
-      settings: { trip_name: '日本旅遊記帳', cash_rate: 0.215, ic_rate: 0.215, card_rate: 0.212, init_cash: 0, init_ic: 0 },
+      settings: { trip_name: '旅遊記帳', cash_rate: 0.215, ic_rate: 0.215, card_rate: 0.212, init_cash: 0, init_ic: 0 },
       summary: { total_spent_jpy: 0, total_spent_twd: 0, cash_balance_jpy: 0, ic_balance_jpy: 0, pending_refund_jpy: 0 },
       transactions: []
     };
     let currentGps = '';
 
-    // 註冊 PWA Service Worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('./sw.js').catch(console.error);
     }
@@ -269,7 +278,10 @@
       return localStorage.getItem('JP_PWA_GAS_URL') || DEFAULT_GAS_URL;
     }
 
-    // 取得目前手機 GPS 經緯度
+    function isTwdMethod(method) {
+      return method === '台幣現金' || method === '台幣信用卡';
+    }
+
     function captureGps() {
       const badge = document.getElementById('gpsBadge');
       badge.textContent = '📍 定位中...';
@@ -290,7 +302,6 @@
       );
     }
 
-    // 呼叫 GAS GET 取得最新帳本
     async function fetchDashboard() {
       const url = getGasUrl();
       if (!url || url.includes('請在此貼上')) return;
@@ -318,9 +329,9 @@
 
     function renderDashboard() {
       const { settings, summary, transactions } = appState;
-      document.getElementById('tripTitle').textContent = `🇯🇵 ${settings.trip_name}`;
+      document.getElementById('tripTitle').textContent = settings.trip_name;
       document.getElementById('totalTwd').textContent = `NT$ ${summary.total_spent_twd.toLocaleString()}`;
-      document.getElementById('totalJpy').textContent = `日幣累計：¥ ${summary.total_spent_jpy.toLocaleString()}`;
+      document.getElementById('totalJpy').textContent = `當地日幣累計：¥ ${summary.total_spent_jpy.toLocaleString()}`;
       document.getElementById('cashBalance').textContent = `¥ ${summary.cash_balance_jpy.toLocaleString()}`;
       document.getElementById('cashRateHint').textContent = `均價 ${settings.cash_rate}`;
       document.getElementById('icBalance').textContent = `¥ ${summary.ic_balance_jpy.toLocaleString()}`;
@@ -355,6 +366,14 @@
           ? `<a href="${tx.receipt_url}" target="_blank" class="text-blue-600 text-[11px] underline ml-2">查看收據</a>` 
           : '';
 
+        // 區分日幣消費與台幣事前訂購的金額顯示
+        const isTwdOnly = (tx.amount_jpy === 0 || isTwdMethod(tx.payment_method));
+        const amountHtml = isTwdOnly
+          ? `<p class="font-extrabold text-base text-slate-900">NT$ ${tx.amount_twd.toLocaleString()}</p>
+             <p class="text-[11px] text-amber-600 font-medium">台幣直接支付</p>`
+          : `<p class="font-extrabold text-base text-slate-900">¥ ${tx.amount_jpy.toLocaleString()}</p>
+             <p class="text-xs text-slate-500">NT$ ${tx.amount_twd.toLocaleString()}</p>`;
+
         return `
           <div class="bg-white p-3.5 rounded-2xl shadow-xs border border-slate-100 flex justify-between items-center">
             <div class="space-y-1 pr-2">
@@ -369,15 +388,13 @@
               <div>${taxTag}</div>
             </div>
             <div class="text-right shrink-0">
-              <p class="font-extrabold text-base text-slate-900">¥ ${tx.amount_jpy.toLocaleString()}</p>
-              <p class="text-xs text-slate-500">NT$ ${tx.amount_twd.toLocaleString()}</p>
+              ${amountHtml}
             </div>
           </div>
         `;
       }).join('');
     }
 
-    // 拍照並壓縮圖片後送交 Gemini 辨識
     async function handleReceiptCapture(event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -390,7 +407,6 @@
         document.getElementById('receiptPreview').src = compressedBase64;
         document.getElementById('previewBox').classList.remove('hidden');
 
-        // 若無網路則直接開啟手動輸入視窗並保留圖片
         if (!navigator.onLine) {
           hideLoading();
           openManualModal();
@@ -422,7 +438,7 @@
 
           document.getElementById('f_receipt_url').value = receipt_url || '';
           document.getElementById('f_merchant').value = ai_data.merchant || '';
-          document.getElementById('f_jpy').value = ai_data.amount_jpy || '';
+          document.getElementById('f_amount').value = ai_data.amount_jpy || '';
           document.getElementById('f_category').value = ai_data.category || '藥妝購物';
           document.getElementById('f_tax_status').value = ai_data.tax_free_status || '無退稅';
           document.getElementById('f_refund_jpy').value = ai_data.pending_refund_jpy || 0;
@@ -432,7 +448,6 @@
           toggleRefundInput();
           updateTwdEstimate();
 
-          // 顯示商品明細
           const items = ai_data.items || [];
           document.getElementById('f_items_json').value = JSON.stringify(items);
           if (items.length > 0) {
@@ -453,7 +468,6 @@
       }
     }
 
-    // Canvas 圖片等比例壓縮（加速行動網路上傳）
     function compressImage(file, maxWidth, quality) {
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -492,7 +506,7 @@
       const pad = (n) => String(n).padStart(2, '0');
       document.getElementById('f_timestamp').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
       captureGps();
-      updateTwdEstimate();
+      togglePaymentFields();
       document.getElementById('txModal').classList.remove('hidden');
     }
 
@@ -502,9 +516,29 @@
 
     function togglePaymentFields() {
       const method = document.getElementById('f_payment').value;
-      if (method === 'IC卡儲值') {
-        document.getElementById('f_merchant').value = '交通 IC 卡儲值';
-        document.getElementById('f_category').value = '交通';
+      const amountLabel = document.getElementById('amountLabel');
+      const amountInput = document.getElementById('f_amount');
+      const taxSection = document.getElementById('taxSection');
+
+      if (isTwdMethod(method)) {
+        amountLabel.textContent = '台幣金額 (NT$)';
+        amountInput.placeholder = '例如 12500';
+        amountInput.classList.remove('text-blue-600');
+        amountInput.classList.add('text-amber-600');
+        taxSection.classList.add('hidden');
+        if (!document.getElementById('f_merchant').value) {
+          document.getElementById('f_category').value = '門票住宿';
+        }
+      } else {
+        amountLabel.textContent = '日幣金額 (¥)';
+        amountInput.placeholder = '例如 1580';
+        amountInput.classList.remove('text-amber-600');
+        amountInput.classList.add('text-blue-600');
+        taxSection.classList.remove('hidden');
+        if (method === 'IC卡儲值') {
+          document.getElementById('f_merchant').value = '交通 IC 卡儲值';
+          document.getElementById('f_category').value = '交通';
+        }
       }
       updateTwdEstimate();
     }
@@ -514,7 +548,7 @@
       const div = document.getElementById('refundAmountDiv');
       if (status === '待櫃台退稅') {
         div.classList.remove('hidden');
-        const jpy = Number(document.getElementById('f_jpy').value) || 0;
+        const jpy = Number(document.getElementById('f_amount').value) || 0;
         if (!Number(document.getElementById('f_refund_jpy').value) && jpy > 0) {
           document.getElementById('f_refund_jpy').value = Math.round(jpy * 0.085);
         }
@@ -524,25 +558,35 @@
     }
 
     function updateTwdEstimate() {
-      const jpy = Number(document.getElementById('f_jpy').value) || 0;
+      const amt = Number(document.getElementById('f_amount').value) || 0;
       const method = document.getElementById('f_payment').value;
+
+      if (isTwdMethod(method)) {
+        document.getElementById('twdEstimateText').textContent = `NT$ ${Math.round(amt).toLocaleString()}`;
+        return;
+      }
+
       let rate = appState.settings.cash_rate;
       if (method === 'IC卡') rate = appState.settings.ic_rate;
-      if (method === '信用卡') rate = appState.settings.card_rate;
-      document.getElementById('twdEstimateText').textContent = `NT$ ${Math.round(jpy * rate).toLocaleString()}`;
+      if (method === '日幣信用卡') rate = appState.settings.card_rate;
+      document.getElementById('twdEstimateText').textContent = `NT$ ${Math.round(amt * rate).toLocaleString()}`;
     }
 
-    // 送出儲存交易（支援離線暫存）
     async function submitTransaction(e) {
       e.preventDefault();
+      const method = document.getElementById('f_payment').value;
+      const amt = Number(document.getElementById('f_amount').value) || 0;
+      const isTwd = isTwdMethod(method);
+
       const payload = {
         action: 'save_tx',
-        payment_method: document.getElementById('f_payment').value,
-        amount_jpy: Number(document.getElementById('f_jpy').value),
+        payment_method: method,
+        amount_jpy: isTwd ? 0 : amt,
+        amount_twd: isTwd ? amt : 0,
         merchant: document.getElementById('f_merchant').value,
         category: document.getElementById('f_category').value,
-        tax_free_status: document.getElementById('f_tax_status').value,
-        pending_refund_jpy: Number(document.getElementById('f_refund_jpy').value) || 0,
+        tax_free_status: isTwd ? '無退稅' : document.getElementById('f_tax_status').value,
+        pending_refund_jpy: isTwd ? 0 : (Number(document.getElementById('f_refund_jpy').value) || 0),
         timestamp: document.getElementById('f_timestamp').value,
         location_gps: document.getElementById('f_location').value,
         receipt_url: document.getElementById('f_receipt_url').value,
@@ -579,7 +623,6 @@
       }
     }
 
-    // 核銷退稅
     async function refundTax(txId) {
       if (!confirm('確定已於退稅櫃台領回日幣現金？系統將自動回補至日幣現金餘額。')) return;
       showLoading('正在核銷退稅並回補現金餘額...');
@@ -601,7 +644,6 @@
       }
     }
 
-    // 離線佇列管理
     function saveToOfflineQueue(payload) {
       const queue = JSON.parse(localStorage.getItem('JP_PWA_OFFLINE_QUEUE') || '[]');
       queue.push(payload);
@@ -637,7 +679,6 @@
       fetchDashboard();
     }
 
-    // 設定視窗控制
     function openSettingsModal() {
       document.getElementById('s_gas_url').value = getGasUrl().includes('請在此貼上') ? '' : getGasUrl();
       document.getElementById('s_trip_name').value = appState.settings.trip_name;
