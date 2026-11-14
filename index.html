@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>日本旅遊 AI 記帳本</title>
+  <link rel="manifest" href="./manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .loader { border: 3px solid #e2e8f0; border-top: 3px solid #2563eb; border-radius: 50%; width: 28px; height: 28px; animation: spin 0.8s linear infinite; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body class="bg-slate-100 text-slate-800 pb-24">
+
+  <!-- 頂部導覽列 -->
+  <header class="bg-slate-900 text-white px-4 py-3 sticky top-0 z-30 shadow-md flex justify-between items-center">
+    <div>
+      <h1 id="tripTitle" class="text-lg font-bold tracking-wide">🇯🇵 載入旅程中...</h1>
+      <p id="syncStatus" class="text-xs text-slate-400">連線狀態檢查中</p>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700">
+        ⚙️ 匯率/設定
+      </button>
+      <button onclick="fetchDashboard()" class="bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-lg text-xs font-medium">
+        🔄 同步
+      </button>
+    </div>
+  </header>
+
+  <!-- 離線待上傳提示列 -->
+  <div id="offlineBanner" class="hidden bg-amber-500 text-white px-4 py-2 text-xs font-medium flex justify-between items-center">
+    <span id="offlineCountText">尚有 0 筆離線紀錄待同步</span>
+    <button onclick="syncOfflineQueue()" class="bg-white text-amber-700 px-2.5 py-1 rounded font-bold">立即上傳</button>
+  </div>
+
+  <!-- 核心數據儀表板 -->
+  <main class="max-w-md mx-auto p-4 space-y-4">
+    
+    <!-- 總花費卡片 -->
+    <section class="bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-2xl p-5 shadow-lg">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-xs text-slate-400">本趟實質總花費（台幣）</p>
+          <p id="totalTwd" class="text-3xl font-extrabold mt-1">NT$ 0</p>
+          <p id="totalJpy" class="text-sm text-slate-300 mt-1">日幣累計：¥ 0</p>
+        </div>
+        <div id="pendingTaxBadge" class="hidden bg-rose-500/20 border border-rose-400/40 text-rose-200 px-3 py-1.5 rounded-xl text-right">
+          <p class="text-[11px]">待退稅金額</p>
+          <p id="pendingTaxJpy" class="text-sm font-bold">¥ 0</p>
+        </div>
+      </div>
+
+      <!-- 雙錢包即時水位 -->
+      <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-700/80">
+        <div class="bg-slate-800/80 p-3 rounded-xl">
+          <p class="text-xs text-slate-400">💴 日幣現金餘額</p>
+          <p id="cashBalance" class="text-lg font-bold text-emerald-400 mt-0.5">¥ 0</p>
+          <p id="cashRateHint" class="text-[11px] text-slate-400">均價 0.215</p>
+        </div>
+        <div class="bg-slate-800/80 p-3 rounded-xl">
+          <p class="text-xs text-slate-400">🚃 交通 IC 卡餘額</p>
+          <p id="icBalance" class="text-lg font-bold text-sky-400 mt-0.5">¥ 0</p>
+          <p id="icRateHint" class="text-[11px] text-slate-400">Suica / ICOCA</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 三大快速操作鈕 -->
+    <section class="grid grid-cols-3 gap-2.5">
+      <label class="col-span-2 bg-blue-600 active:bg-blue-700 text-white rounded-2xl p-3.5 shadow-md flex items-center justify-center gap-2 cursor-pointer font-bold text-base">
+        <span>📸 拍收據 AI 辨識</span>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptCapture(event)" />
+      </label>
+      <button onclick="openManualModal()" class="bg-white active:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl p-3.5 shadow-sm flex flex-col items-center justify-center font-bold text-sm">
+        <span>✍️ 手動/儲值</span>
+      </button>
+    </section>
+
+    <!-- 即時消費流水帳 -->
+    <section>
+      <div class="flex justify-between items-center mb-2.5">
+        <h2 class="text-sm font-bold text-slate-600">消費明細紀錄</h2>
+        <span id="txCount" class="text-xs text-slate-400">共 0 筆</span>
+      </div>
+      <div id="txList" class="space-y-2.5">
+        <div class="text-center py-8 text-slate-400 text-sm">尚無消費紀錄，點擊上方按鈕開始記帳</div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Loading 遮罩 -->
+  <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex flex-col items-center justify-center text-white">
+    <div class="loader mb-3"></div>
+    <p id="loadingText" class="text-sm font-medium">AI 正在解析收據與上傳雲端...</p>
+  </div>
+
+  <!-- 記帳確認 / 手動輸入 Modal -->
+  <div id="txModal" class="hidden fixed inset-0 bg-slate-900/60 z-40 flex items-end sm:items-center justify-center">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex justify-between items-center pb-3 border-b">
+        <h3 id="modalTitle" class="text-lg font-bold">確認消費明細</h3>
+        <button onclick="closeTxModal()" class="text-slate-400 text-xl font-bold px-2">✕</button>
+      </div>
+
+      <form id="txForm" onsubmit="submitTransaction(event)" class="space-y-3.5 mt-4">
+        <input type="hidden" id="f_receipt_url" />
+        <input type="hidden" id="f_items_json" />
+
+        <!-- 收據縮圖預覽 -->
+        <div id="previewBox" class="hidden bg-slate-100 p-2 rounded-xl text-center">
+          <img id="receiptPreview" class="max-h-36 mx-auto rounded-lg object-contain" />
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">支付方式</label>
+            <select id="f_payment" onchange="togglePaymentFields()" class="w-full border rounded-xl px-3 py-2 text-sm bg-slate-50 font-medium">
+              <option value="日幣現金">💴 日幣現金</option>
+              <option value="IC卡">🚃 交通 IC 卡扣款</option>
+              <option value="信用卡">💳 信用卡</option>
+              <option value="IC卡儲值">➕ 現金儲值 IC 卡</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">日幣金額 (¥)</label>
+            <input type="number" id="f_jpy" required oninput="updateTwdEstimate()" class="w-full border rounded-xl px-3 py-2 text-base font-bold text-blue-600" placeholder="例如 1580" />
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center bg-blue-50 px-3 py-2 rounded-xl text-xs">
+          <span class="text-blue-800">預估台幣成本：<strong id="twdEstimateText" class="text-sm">NT$ 0</strong></span>
+          <span id="gpsBadge" class="text-slate-500">📍 GPS 定位中...</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">店家 / 項目名稱</label>
+            <input type="text" id="f_merchant" required class="w-full border rounded-xl px-3 py-2 text-sm" placeholder="例如：LAWSON 那霸店" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">消費分類</label>
+            <select id="f_category" class="w-full border rounded-xl px-3 py-2 text-sm bg-slate-50">
+              <option value="餐飲">🍜 餐飲</option>
+              <option value="交通">🚝 交通</option>
+              <option value="藥妝購物">🛍️ 藥妝購物</option>
+              <option value="門票住宿">🏨 門票住宿</option>
+              <option value="伴手禮">🎁 伴手禮</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-slate-600 mb-1">日本退稅狀態</label>
+            <select id="f_tax_status" onchange="toggleRefundInput()" class="w-full border rounded-xl px-3 py-2 text-sm bg-slate-50">
+              <option value="無退稅">無退稅 (含稅消費)</option>
+              <option value="已現場免稅">已現場免稅 (未稅結帳)</option>
+              <option value="待櫃台退稅">待櫃台/機場退稅</option>
+            </select>
+          </div>
+          <div id="refundAmountDiv" class="hidden">
+            <label class="block text-xs font-bold text-rose-600 mb-1">預計退稅日幣 (¥)</label>
+            <input type="number" id="f_refund_jpy" class="w-full border border-rose-300 rounded-xl px-3 py-2 text-sm font-bold text-rose-600" value="0" />
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">消費時間與地點</label>
+          <div class="grid grid-cols-2 gap-2">
+            <input type="text" id="f_timestamp" class="w-full border rounded-xl px-3 py-1.5 text-xs text-slate-600" />
+            <input type="text" id="f_location" class="w-full border rounded-xl px-3 py-1.5 text-xs text-slate-600" placeholder="GPS 或地標" />
+          </div>
+        </div>
+
+        <!-- AI 解析出的商品細項 -->
+        <div id="aiItemsBox" class="hidden bg-slate-50 p-3 rounded-xl border border-slate-200">
+          <p class="text-xs font-bold text-slate-600 mb-1.5">🧾 AI 辨識商品明細：</p>
+          <ul id="aiItemsList" class="text-xs text-slate-600 space-y-1 max-h-24 overflow-y-auto"></ul>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md mt-2">
+          ✅ 確認儲存入帳
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- 設定 Modal (包含 GAS Web App URL 與匯率設定) -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-slate-900/60 z-40 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-3.5">
+      <div class="flex justify-between items-center border-b pb-2">
+        <h3 class="text-lg font-bold">⚙️ 系統連線與匯率設定</h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 text-xl font-bold">✕</button>
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-600 mb-1">Google Apps Script 部署網址 (Web App URL)</label>
+        <input type="url" id="s_gas_url" class="w-full border rounded-xl px-3 py-2 text-xs font-mono bg-slate-50" placeholder="https://script.google.com/macros/s/..." />
+      </div>
+
+      <div>
+        <label class="block text-xs font-bold text-slate-600 mb-1">單趟旅程名稱</label>
+        <input type="text" id="s_trip_name" class="w-full border rounded-xl px-3 py-2 text-sm" />
+      </div>
+
+      <div class="grid grid-cols-3 gap-2">
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">現金換匯均價</label>
+          <input type="number" step="0.0001" id="s_cash_rate" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">IC卡儲值均價</label>
+          <input type="number" step="0.0001" id="s_ic_rate" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">刷卡實質係數</label>
+          <input type="number" step="0.0001" id="s_card_rate" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">初始日幣現金 (¥)</label>
+          <input type="number" id="s_init_cash" class="w-full border rounded-xl px-3 py-1.5 text-sm" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1">初始 IC 卡餘額 (¥)</label>
+          <input type="number" id="s_init_ic" class="w-full border rounded-xl px-3 py-1.5 text-sm" />
+        </div>
+      </div>
+
+      <button onclick="saveSettings()" class="w-full bg-slate-900 text-white font-bold py-2.5 rounded-xl mt-2">
+        儲存設定並同步
+      </button>
+    </div>
+  </div>
+
+  <script>
+    // 預設填寫你的 GAS 網址，或透過介面設定存入 localStorage
+    const DEFAULT_GAS_URL = '請在此貼上你部署後的_GAS_WEB_APP_URL';
+    let appState = {
+      settings: { trip_name: '日本旅遊記帳', cash_rate: 0.215, ic_rate: 0.215, card_rate: 0.212, init_cash: 0, init_ic: 0 },
+      summary: { total_spent_jpy: 0, total_spent_twd: 0, cash_balance_jpy: 0, ic_balance_jpy: 0, pending_refund_jpy: 0 },
+      transactions: []
+    };
+    let currentGps = '';
+
+    // 註冊 PWA Service Worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('./sw.js').catch(console.error);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      updateOfflineBanner();
+      const gasUrl = getGasUrl();
+      if (!gasUrl || gasUrl.includes('請在此貼上')) {
+        openSettingsModal();
+      } else {
+        fetchDashboard();
+      }
+    });
+
+    function getGasUrl() {
+      return localStorage.getItem('JP_PWA_GAS_URL') || DEFAULT_GAS_URL;
+    }
+
+    // 取得目前手機 GPS 經緯度
+    function captureGps() {
+      const badge = document.getElementById('gpsBadge');
+      badge.textContent = '📍 定位中...';
+      if (!navigator.geolocation) {
+        badge.textContent = '📍 裝置不支援定位';
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          currentGps = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
+          badge.textContent = `📍 ${currentGps}`;
+          if (!document.getElementById('f_location').value) {
+            document.getElementById('f_location').value = currentGps;
+          }
+        },
+        () => { badge.textContent = '📍 未取得GPS權限'; },
+        { enableHighAccuracy: true, timeout: 6000 }
+      );
+    }
+
+    // 呼叫 GAS GET 取得最新帳本
+    async function fetchDashboard() {
+      const url = getGasUrl();
+      if (!url || url.includes('請在此貼上')) return;
+      document.getElementById('syncStatus').textContent = '正在從 Google Sheets 同步...';
+      try {
+        const res = await fetch(url);
+        const json = await res.json();
+        if (json.status === 'success') {
+          appState = json.data;
+          localStorage.setItem('JP_PWA_CACHE_STATE', JSON.stringify(appState));
+          renderDashboard();
+          document.getElementById('syncStatus').textContent = `已連線 • ${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'})} 更新`;
+        } else {
+          alert('同步錯誤：' + json.message);
+        }
+      } catch (err) {
+        const cached = localStorage.getItem('JP_PWA_CACHE_STATE');
+        if (cached) {
+          appState = JSON.parse(cached);
+          renderDashboard();
+        }
+        document.getElementById('syncStatus').textContent = '⚠️ 離線模式（顯示快取資料）';
+      }
+    }
+
+    function renderDashboard() {
+      const { settings, summary, transactions } = appState;
+      document.getElementById('tripTitle').textContent = `🇯🇵 ${settings.trip_name}`;
+      document.getElementById('totalTwd').textContent = `NT$ ${summary.total_spent_twd.toLocaleString()}`;
+      document.getElementById('totalJpy').textContent = `日幣累計：¥ ${summary.total_spent_jpy.toLocaleString()}`;
+      document.getElementById('cashBalance').textContent = `¥ ${summary.cash_balance_jpy.toLocaleString()}`;
+      document.getElementById('cashRateHint').textContent = `均價 ${settings.cash_rate}`;
+      document.getElementById('icBalance').textContent = `¥ ${summary.ic_balance_jpy.toLocaleString()}`;
+      document.getElementById('icRateHint').textContent = `均價 ${settings.ic_rate}`;
+
+      const taxBadge = document.getElementById('pendingTaxBadge');
+      if (summary.pending_refund_jpy > 0) {
+        taxBadge.classList.remove('hidden');
+        document.getElementById('pendingTaxJpy').textContent = `¥ ${summary.pending_refund_jpy.toLocaleString()}`;
+      } else {
+        taxBadge.classList.add('hidden');
+      }
+
+      document.getElementById('txCount').textContent = `共 ${transactions.length} 筆`;
+      const listEl = document.getElementById('txList');
+      if (!transactions.length) {
+        listEl.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">尚無消費紀錄，點擊上方按鈕開始記帳</div>`;
+        return;
+      }
+
+      listEl.innerHTML = transactions.map(tx => {
+        let taxTag = '';
+        if (tx.tax_free_status === '已現場免稅') {
+          taxTag = `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0.5 rounded font-bold">已免稅(勿拆封)</span>`;
+        } else if (tx.tax_free_status === '待櫃台退稅') {
+          taxTag = `<button onclick="refundTax('${tx.tx_id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] px-2 py-0.5 rounded font-bold">待退 ¥${tx.pending_refund_jpy} (點此核銷)</button>`;
+        } else if (tx.tax_free_status === '已櫃台退稅') {
+          taxTag = `<span class="bg-slate-200 text-slate-600 text-[10px] px-1.5 py-0.5 rounded">已退稅完成</span>`;
+        }
+
+        const receiptBtn = tx.receipt_url 
+          ? `<a href="${tx.receipt_url}" target="_blank" class="text-blue-600 text-[11px] underline ml-2">查看收據</a>` 
+          : '';
+
+        return `
+          <div class="bg-white p-3.5 rounded-2xl shadow-xs border border-slate-100 flex justify-between items-center">
+            <div class="space-y-1 pr-2">
+              <div class="flex items-center gap-1.5 flex-wrap">
+                <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">${tx.category}</span>
+                <span class="font-bold text-sm text-slate-800">${tx.merchant}</span>
+              </div>
+              <div class="text-[11px] text-slate-400 flex items-center flex-wrap gap-1">
+                <span>${tx.timestamp}</span> • <span>${tx.payment_method}</span>
+                ${receiptBtn}
+              </div>
+              <div>${taxTag}</div>
+            </div>
+            <div class="text-right shrink-0">
+              <p class="font-extrabold text-base text-slate-900">¥ ${tx.amount_jpy.toLocaleString()}</p>
+              <p class="text-xs text-slate-500">NT$ ${tx.amount_twd.toLocaleString()}</p>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // 拍照並壓縮圖片後送交 Gemini 辨識
+    async function handleReceiptCapture(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      captureGps();
+      showLoading('壓縮收據照片並呼叫 Gemini AI 辨識中...');
+
+      try {
+        const compressedBase64 = await compressImage(file, 1024, 0.8);
+        document.getElementById('receiptPreview').src = compressedBase64;
+        document.getElementById('previewBox').classList.remove('hidden');
+
+        // 若無網路則直接開啟手動輸入視窗並保留圖片
+        if (!navigator.onLine) {
+          hideLoading();
+          openManualModal();
+          document.getElementById('receiptPreview').src = compressedBase64;
+          document.getElementById('previewBox').classList.remove('hidden');
+          alert('目前處於離線狀態，請先手動輸入金額，連線後將自動同步！');
+          return;
+        }
+
+        const res = await fetch(getGasUrl(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'analyze_receipt',
+            image_base64: compressedBase64,
+            mime_type: 'image/jpeg'
+          })
+        });
+
+        const json = await res.json();
+        hideLoading();
+
+        if (json.status === 'success') {
+          const { receipt_url, ai_data } = json.data;
+          openManualModal();
+          document.getElementById('modalTitle').textContent = '🤖 AI 收據辨識結果確認';
+          document.getElementById('receiptPreview').src = compressedBase64;
+          document.getElementById('previewBox').classList.remove('hidden');
+
+          document.getElementById('f_receipt_url').value = receipt_url || '';
+          document.getElementById('f_merchant').value = ai_data.merchant || '';
+          document.getElementById('f_jpy').value = ai_data.amount_jpy || '';
+          document.getElementById('f_category').value = ai_data.category || '藥妝購物';
+          document.getElementById('f_tax_status').value = ai_data.tax_free_status || '無退稅';
+          document.getElementById('f_refund_jpy').value = ai_data.pending_refund_jpy || 0;
+          if (ai_data.timestamp) document.getElementById('f_timestamp').value = ai_data.timestamp;
+          if (ai_data.location_hint && !currentGps) document.getElementById('f_location').value = ai_data.location_hint;
+
+          toggleRefundInput();
+          updateTwdEstimate();
+
+          // 顯示商品明細
+          const items = ai_data.items || [];
+          document.getElementById('f_items_json').value = JSON.stringify(items);
+          if (items.length > 0) {
+            document.getElementById('aiItemsBox').classList.remove('hidden');
+            document.getElementById('aiItemsList').innerHTML = items.map(it => 
+              `<li>• ${it.name} x${it.qty || 1} — ¥${it.price_jpy}</li>`
+            ).join('');
+          }
+        } else {
+          alert('AI 辨識失敗，請改為手動輸入：' + json.message);
+          openManualModal();
+        }
+      } catch (err) {
+        hideLoading();
+        alert('發生錯誤：' + err.message);
+      } finally {
+        event.target.value = '';
+      }
+    }
+
+    // Canvas 圖片等比例壓縮（加速行動網路上傳）
+    function compressImage(file, maxWidth, quality) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const img = new Image();
+          img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+            if (width > maxWidth) {
+              height = Math.round((height * maxWidth) / width);
+              width = maxWidth;
+            }
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
+    function openManualModal() {
+      document.getElementById('txForm').reset();
+      document.getElementById('modalTitle').textContent = '✍️ 新增消費 / 儲值紀錄';
+      document.getElementById('previewBox').classList.add('hidden');
+      document.getElementById('aiItemsBox').classList.add('hidden');
+      document.getElementById('refundAmountDiv').classList.add('hidden');
+      document.getElementById('f_receipt_url').value = '';
+      document.getElementById('f_items_json').value = '[]';
+
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      document.getElementById('f_timestamp').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
+      captureGps();
+      updateTwdEstimate();
+      document.getElementById('txModal').classList.remove('hidden');
+    }
+
+    function closeTxModal() {
+      document.getElementById('txModal').classList.add('hidden');
+    }
+
+    function togglePaymentFields() {
+      const method = document.getElementById('f_payment').value;
+      if (method === 'IC卡儲值') {
+        document.getElementById('f_merchant').value = '交通 IC 卡儲值';
+        document.getElementById('f_category').value = '交通';
+      }
+      updateTwdEstimate();
+    }
+
+    function toggleRefundInput() {
+      const status = document.getElementById('f_tax_status').value;
+      const div = document.getElementById('refundAmountDiv');
+      if (status === '待櫃台退稅') {
+        div.classList.remove('hidden');
+        const jpy = Number(document.getElementById('f_jpy').value) || 0;
+        if (!Number(document.getElementById('f_refund_jpy').value) && jpy > 0) {
+          document.getElementById('f_refund_jpy').value = Math.round(jpy * 0.085);
+        }
+      } else {
+        div.classList.add('hidden');
+      }
+    }
+
+    function updateTwdEstimate() {
+      const jpy = Number(document.getElementById('f_jpy').value) || 0;
+      const method = document.getElementById('f_payment').value;
+      let rate = appState.settings.cash_rate;
+      if (method === 'IC卡') rate = appState.settings.ic_rate;
+      if (method === '信用卡') rate = appState.settings.card_rate;
+      document.getElementById('twdEstimateText').textContent = `NT$ ${Math.round(jpy * rate).toLocaleString()}`;
+    }
+
+    // 送出儲存交易（支援離線暫存）
+    async function submitTransaction(e) {
+      e.preventDefault();
+      const payload = {
+        action: 'save_tx',
+        payment_method: document.getElementById('f_payment').value,
+        amount_jpy: Number(document.getElementById('f_jpy').value),
+        merchant: document.getElementById('f_merchant').value,
+        category: document.getElementById('f_category').value,
+        tax_free_status: document.getElementById('f_tax_status').value,
+        pending_refund_jpy: Number(document.getElementById('f_refund_jpy').value) || 0,
+        timestamp: document.getElementById('f_timestamp').value,
+        location_gps: document.getElementById('f_location').value,
+        receipt_url: document.getElementById('f_receipt_url').value,
+        items: JSON.parse(document.getElementById('f_items_json').value || '[]')
+      };
+
+      closeTxModal();
+
+      if (!navigator.onLine) {
+        saveToOfflineQueue(payload);
+        alert('目前無網路，已存入本機離線佇列，恢復網路後請點擊上方「立即上傳」！');
+        return;
+      }
+
+      showLoading('正在寫入 Google Sheets 帳本...');
+      try {
+        const res = await fetch(getGasUrl(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(payload)
+        });
+        const json = await res.json();
+        hideLoading();
+        if (json.status === 'success') {
+          appState = json.data;
+          renderDashboard();
+        } else {
+          alert('儲存失敗：' + json.message);
+        }
+      } catch (err) {
+        hideLoading();
+        saveToOfflineQueue(payload);
+        alert('連線不穩，已自動轉存離線佇列！');
+      }
+    }
+
+    // 核銷退稅
+    async function refundTax(txId) {
+      if (!confirm('確定已於退稅櫃台領回日幣現金？系統將自動回補至日幣現金餘額。')) return;
+      showLoading('正在核銷退稅並回補現金餘額...');
+      try {
+        const res = await fetch(getGasUrl(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'refund_tax', tx_id: txId })
+        });
+        const json = await res.json();
+        hideLoading();
+        if (json.status === 'success') {
+          appState = json.data;
+          renderDashboard();
+        }
+      } catch (err) {
+        hideLoading();
+        alert('核銷失敗：' + err.message);
+      }
+    }
+
+    // 離線佇列管理
+    function saveToOfflineQueue(payload) {
+      const queue = JSON.parse(localStorage.getItem('JP_PWA_OFFLINE_QUEUE') || '[]');
+      queue.push(payload);
+      localStorage.setItem('JP_PWA_OFFLINE_QUEUE', JSON.stringify(queue));
+      updateOfflineBanner();
+    }
+
+    function updateOfflineBanner() {
+      const queue = JSON.parse(localStorage.getItem('JP_PWA_OFFLINE_QUEUE') || '[]');
+      const banner = document.getElementById('offlineBanner');
+      if (queue.length > 0) {
+        banner.classList.remove('hidden');
+        document.getElementById('offlineCountText').textContent = `尚有 ${queue.length} 筆離線紀錄待同步`;
+      } else {
+        banner.classList.add('hidden');
+      }
+    }
+
+    async function syncOfflineQueue() {
+      const queue = JSON.parse(localStorage.getItem('JP_PWA_OFFLINE_QUEUE') || '[]');
+      if (!queue.length) return;
+      showLoading(`正在上傳 ${queue.length} 筆離線紀錄...`);
+      for (const item of queue) {
+        await fetch(getGasUrl(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify(item)
+        });
+      }
+      localStorage.removeItem('JP_PWA_OFFLINE_QUEUE');
+      updateOfflineBanner();
+      hideLoading();
+      fetchDashboard();
+    }
+
+    // 設定視窗控制
+    function openSettingsModal() {
+      document.getElementById('s_gas_url').value = getGasUrl().includes('請在此貼上') ? '' : getGasUrl();
+      document.getElementById('s_trip_name').value = appState.settings.trip_name;
+      document.getElementById('s_cash_rate').value = appState.settings.cash_rate;
+      document.getElementById('s_ic_rate').value = appState.settings.ic_rate;
+      document.getElementById('s_card_rate').value = appState.settings.card_rate;
+      document.getElementById('s_init_cash').value = appState.settings.init_cash;
+      document.getElementById('s_init_ic').value = appState.settings.init_ic;
+      document.getElementById('settingsModal').classList.remove('hidden');
+    }
+
+    function closeSettingsModal() {
+      document.getElementById('settingsModal').classList.add('hidden');
+    }
+
+    async function saveSettings() {
+      const gasUrl = document.getElementById('s_gas_url').value.trim();
+      if (!gasUrl) {
+        alert('請填入 Google Apps Script Web App 網址');
+        return;
+      }
+      localStorage.setItem('JP_PWA_GAS_URL', gasUrl);
+      closeSettingsModal();
+      showLoading('儲存設定中...');
+
+      try {
+        const res = await fetch(gasUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({
+            action: 'update_settings',
+            trip_name: document.getElementById('s_trip_name').value,
+            cash_rate: Number(document.getElementById('s_cash_rate').value),
+            ic_rate: Number(document.getElementById('s_ic_rate').value),
+            card_rate: Number(document.getElementById('s_card_rate').value),
+            init_cash: Number(document.getElementById('s_init_cash').value),
+            init_ic: Number(document.getElementById('s_init_ic').value)
+          })
+        });
+        const json = await res.json();
+        hideLoading();
+        if (json.status === 'success') {
+          appState = json.data;
+          renderDashboard();
+        }
+      } catch (err) {
+        hideLoading();
+        fetchDashboard();
+      }
+    }
+
+    function showLoading(text) {
+      document.getElementById('loadingText').textContent = text;
+      document.getElementById('loadingOverlay').classList.remove('hidden');
+    }
+    function hideLoading() {
+      document.getElementById('loadingOverlay').classList.add('hidden');
+    }
+  </script>
+</body>
+</html>
