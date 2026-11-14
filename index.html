@@ -19,20 +19,20 @@
 </head>
 <body class="bg-slate-100 text-slate-800 pb-24">
 
-  <!-- 頂部導覽列 -->
-  <header class="bg-slate-900 text-white px-4 py-3 sticky top-0 z-30 shadow-md flex justify-between items-center">
-    <div class="flex items-center gap-2.5">
-      <img src="./icon.svg" alt="icon" class="w-8 h-8 rounded-lg shadow-xs" />
-      <div>
-        <h1 id="tripTitle" class="text-base font-bold tracking-wide">旅遊記帳</h1>
-        <p id="syncStatus" class="text-[11px] text-slate-400">連線狀態檢查中</p>
+  <!-- 頂部導覽列（防手機端換行優化） -->
+  <header class="bg-slate-900 text-white px-3.5 py-3 sticky top-0 z-30 shadow-md flex justify-between items-center gap-2">
+    <div class="flex items-center gap-2.5 min-w-0 flex-1">
+      <img src="./icon.svg" alt="icon" class="w-8 h-8 rounded-lg shrink-0 shadow-xs" />
+      <div class="min-w-0 flex-1">
+        <h1 id="tripTitle" class="text-base font-bold tracking-wide truncate">旅遊記帳</h1>
+        <p id="syncStatus" class="text-[11px] text-slate-400 truncate">連線狀態檢查中</p>
       </div>
     </div>
-    <div class="flex gap-2">
-      <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700">
-        ⚙️ 匯率/設定
+    <div class="flex items-center gap-1.5 shrink-0">
+      <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-700 whitespace-nowrap">
+        ⚙️ 設定
       </button>
-      <button onclick="fetchDashboard()" class="bg-blue-600 hover:bg-blue-500 px-3 py-1.5 rounded-lg text-xs font-medium">
+      <button onclick="fetchDashboard()" class="bg-blue-600 hover:bg-blue-500 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">
         🔄 同步
       </button>
     </div>
@@ -41,7 +41,7 @@
   <!-- 離線待上傳提示列 -->
   <div id="offlineBanner" class="hidden bg-amber-500 text-white px-4 py-2 text-xs font-medium flex justify-between items-center">
     <span id="offlineCountText">尚有 0 筆離線紀錄待同步</span>
-    <button onclick="syncOfflineQueue()" class="bg-white text-amber-700 px-2.5 py-1 rounded font-bold">立即上傳</button>
+    <button onclick="syncOfflineQueue()" class="bg-white text-amber-700 px-2.5 py-1 rounded font-bold whitespace-nowrap">立即上傳</button>
   </div>
 
   <!-- 核心數據儀表板 -->
@@ -49,13 +49,13 @@
     
     <!-- 總花費卡片 -->
     <section class="bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-2xl p-5 shadow-lg">
-      <div class="flex justify-between items-start">
+      <div class="flex justify-between items-start gap-2">
         <div>
           <p class="text-xs text-slate-400">本趟實質總花費（含機酒台幣＋當地日幣）</p>
           <p id="totalTwd" class="text-3xl font-extrabold mt-1">NT$ 0</p>
           <p id="totalJpy" class="text-sm text-slate-300 mt-1">當地日幣累計：¥ 0</p>
         </div>
-        <div id="pendingTaxBadge" class="hidden bg-rose-500/20 border border-rose-400/40 text-rose-200 px-3 py-1.5 rounded-xl text-right">
+        <div id="pendingTaxBadge" class="hidden bg-rose-500/20 border border-rose-400/40 text-rose-200 px-3 py-1.5 rounded-xl text-right shrink-0">
           <p class="text-[11px]">待退稅金額</p>
           <p id="pendingTaxJpy" class="text-sm font-bold">¥ 0</p>
         </div>
@@ -78,12 +78,12 @@
 
     <!-- 等寬對稱雙操作鈕 -->
     <section class="grid grid-cols-2 gap-3">
-      <label class="bg-blue-600 active:bg-blue-700 text-white rounded-2xl h-14 px-3 shadow-md flex items-center justify-center gap-2 cursor-pointer font-bold text-sm select-none">
+      <label class="bg-blue-600 active:bg-blue-700 text-white rounded-2xl h-14 px-3 shadow-md flex items-center justify-center gap-2 cursor-pointer font-bold text-sm select-none whitespace-nowrap">
         <span class="text-lg">📸</span>
         <span>拍收據 AI 辨識</span>
         <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptCapture(event)" />
       </label>
-      <button onclick="openManualModal()" class="bg-white active:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl h-14 px-3 shadow-sm flex items-center justify-center gap-2 font-bold text-sm select-none">
+      <button onclick="openManualModal()" class="bg-white active:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl h-14 px-3 shadow-sm flex items-center justify-center gap-2 font-bold text-sm select-none whitespace-nowrap">
         <span class="text-lg">✍️</span>
         <span>手動 / 儲值</span>
       </button>
@@ -107,15 +107,16 @@
     <p id="loadingText" class="text-sm font-medium">AI 正在解析收據與上傳雲端...</p>
   </div>
 
-  <!-- 記帳確認 / 手動輸入 Modal -->
+  <!-- 新增 / 編輯記帳 Modal -->
   <div id="txModal" class="hidden fixed inset-0 bg-slate-900/60 z-40 flex items-end sm:items-center justify-center">
     <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 max-h-[90vh] overflow-y-auto shadow-2xl">
       <div class="flex justify-between items-center pb-3 border-b">
-        <h3 id="modalTitle" class="text-lg font-bold">確認消費明細</h3>
+        <h3 id="modalTitle" class="text-lg font-bold">新增消費 / 儲值紀錄</h3>
         <button onclick="closeTxModal()" class="text-slate-400 text-xl font-bold px-2">✕</button>
       </div>
 
       <form id="txForm" onsubmit="submitTransaction(event)" class="space-y-3.5 mt-4">
+        <input type="hidden" id="f_tx_id" />
         <input type="hidden" id="f_receipt_url" />
         <input type="hidden" id="f_items_json" />
 
@@ -150,7 +151,7 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1">店家 / 項目名稱</label>
-            <input type="text" id="f_merchant" required class="w-full border rounded-xl px-3 py-2 text-sm" placeholder="例如：星宇航空機票 / LAWSON" />
+            <input type="text" id="f_merchant" required class="w-full border rounded-xl px-3 py-2 text-sm" placeholder="例如：星宇航空機票" />
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1">消費分類</label>
@@ -181,10 +182,11 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">消費時間與地點</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1">消費日期與地點</label>
           <div class="grid grid-cols-2 gap-2">
-            <input type="text" id="f_timestamp" class="w-full border rounded-xl px-3 py-1.5 text-xs text-slate-600" />
-            <input type="text" id="f_location" class="w-full border rounded-xl px-3 py-1.5 text-xs text-slate-600" placeholder="GPS 或地標" />
+            <!-- 原生日期選擇器，避免格式輸入錯誤 -->
+            <input type="date" id="f_date" required class="w-full border rounded-xl px-2.5 py-1.5 text-xs text-slate-700 bg-white" />
+            <input type="text" id="f_location" class="w-full border rounded-xl px-3 py-1.5 text-xs text-slate-600" placeholder="GPS 或地標（選填）" />
           </div>
         </div>
 
@@ -194,7 +196,7 @@
           <ul id="aiItemsList" class="text-xs text-slate-600 space-y-1 max-h-24 overflow-y-auto"></ul>
         </div>
 
-        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md mt-2">
+        <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md mt-2">
           ✅ 確認儲存入帳
         </button>
       </form>
@@ -282,22 +284,28 @@
       return method === '台幣現金' || method === '台幣信用卡';
     }
 
+    function getTodayDateString() {
+      const now = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
+    }
+
     function captureGps() {
       const badge = document.getElementById('gpsBadge');
       badge.textContent = '📍 定位中...';
       if (!navigator.geolocation) {
-        badge.textContent = '📍 裝置不支援定位';
+        badge.textContent = '📍 不支援定位';
         return;
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           currentGps = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
-          badge.textContent = `📍 ${currentGps}`;
+          badge.textContent = `📍 已取得定位`;
           if (!document.getElementById('f_location').value) {
             document.getElementById('f_location').value = currentGps;
           }
         },
-        () => { badge.textContent = '📍 未取得GPS權限'; },
+        () => { badge.textContent = '📍 未開啟定位'; },
         { enableHighAccuracy: true, timeout: 6000 }
       );
     }
@@ -305,7 +313,7 @@
     async function fetchDashboard() {
       const url = getGasUrl();
       if (!url || url.includes('請在此貼上')) return;
-      document.getElementById('syncStatus').textContent = '正在從 Google Sheets 同步...';
+      document.getElementById('syncStatus').textContent = '同步中...';
       try {
         const res = await fetch(url);
         const json = await res.json();
@@ -313,7 +321,7 @@
           appState = json.data;
           localStorage.setItem('JP_PWA_CACHE_STATE', JSON.stringify(appState));
           renderDashboard();
-          document.getElementById('syncStatus').textContent = `已連線 • ${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'})} 更新`;
+          document.getElementById('syncStatus').textContent = `已連線 • ${new Date().toLocaleTimeString('zh-TW', {hour:'2-digit', minute:'2-digit'})}`;
         } else {
           alert('同步錯誤：' + json.message);
         }
@@ -323,7 +331,7 @@
           appState = JSON.parse(cached);
           renderDashboard();
         }
-        document.getElementById('syncStatus').textContent = '⚠️ 離線模式（顯示快取資料）';
+        document.getElementById('syncStatus').textContent = '⚠️ 離線模式';
       }
     }
 
@@ -357,35 +365,38 @@
         if (tx.tax_free_status === '已現場免稅') {
           taxTag = `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0.5 rounded font-bold">已免稅(勿拆封)</span>`;
         } else if (tx.tax_free_status === '待櫃台退稅') {
-          taxTag = `<button onclick="refundTax('${tx.tx_id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] px-2 py-0.5 rounded font-bold">待退 ¥${tx.pending_refund_jpy} (點此核銷)</button>`;
+          taxTag = `<button onclick="refundTax('${tx.tx_id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] px-2 py-0.5 rounded font-bold">待退 ¥${tx.pending_refund_jpy} (核銷)</button>`;
         } else if (tx.tax_free_status === '已櫃台退稅') {
           taxTag = `<span class="bg-slate-200 text-slate-600 text-[10px] px-1.5 py-0.5 rounded">已退稅完成</span>`;
         }
 
         const receiptBtn = tx.receipt_url 
-          ? `<a href="${tx.receipt_url}" target="_blank" class="text-blue-600 text-[11px] underline ml-2">查看收據</a>` 
+          ? `<a href="${tx.receipt_url}" target="_blank" class="text-blue-600 text-[11px] underline ml-1">收據</a>` 
           : '';
 
-        // 區分日幣消費與台幣事前訂購的金額顯示
         const isTwdOnly = (tx.amount_jpy === 0 || isTwdMethod(tx.payment_method));
         const amountHtml = isTwdOnly
           ? `<p class="font-extrabold text-base text-slate-900">NT$ ${tx.amount_twd.toLocaleString()}</p>
-             <p class="text-[11px] text-amber-600 font-medium">台幣直接支付</p>`
+             <p class="text-[11px] text-amber-600 font-medium">台幣支付</p>`
           : `<p class="font-extrabold text-base text-slate-900">¥ ${tx.amount_jpy.toLocaleString()}</p>
              <p class="text-xs text-slate-500">NT$ ${tx.amount_twd.toLocaleString()}</p>`;
 
         return `
-          <div class="bg-white p-3.5 rounded-2xl shadow-xs border border-slate-100 flex justify-between items-center">
-            <div class="space-y-1 pr-2">
+          <div class="bg-white p-3.5 rounded-2xl shadow-xs border border-slate-100 flex justify-between items-center gap-2">
+            <div class="space-y-1 min-w-0 flex-1">
               <div class="flex items-center gap-1.5 flex-wrap">
-                <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium">${tx.category}</span>
-                <span class="font-bold text-sm text-slate-800">${tx.merchant}</span>
+                <span class="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium shrink-0">${tx.category}</span>
+                <span class="font-bold text-sm text-slate-800 truncate">${tx.merchant}</span>
               </div>
               <div class="text-[11px] text-slate-400 flex items-center flex-wrap gap-1">
-                <span>${tx.timestamp}</span> • <span>${tx.payment_method}</span>
+                <span>${tx.date}</span> • <span>${tx.payment_method}</span>
                 ${receiptBtn}
               </div>
-              <div>${taxTag}</div>
+              <div class="flex items-center gap-1.5 pt-0.5">
+                ${taxTag}
+                <button onclick="openEditModal('${tx.tx_id}')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-medium">✏️ 編輯</button>
+                <button onclick="deleteTransaction('${tx.tx_id}')" class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-0.5 rounded font-medium">🗑️</button>
+              </div>
             </div>
             <div class="text-right shrink-0">
               ${amountHtml}
@@ -404,8 +415,6 @@
 
       try {
         const compressedBase64 = await compressImage(file, 1024, 0.8);
-        document.getElementById('receiptPreview').src = compressedBase64;
-        document.getElementById('previewBox').classList.remove('hidden');
 
         if (!navigator.onLine) {
           hideLoading();
@@ -442,8 +451,12 @@
           document.getElementById('f_category').value = ai_data.category || '藥妝購物';
           document.getElementById('f_tax_status').value = ai_data.tax_free_status || '無退稅';
           document.getElementById('f_refund_jpy').value = ai_data.pending_refund_jpy || 0;
-          if (ai_data.timestamp) document.getElementById('f_timestamp').value = ai_data.timestamp;
-          if (ai_data.location_hint && !currentGps) document.getElementById('f_location').value = ai_data.location_hint;
+          if (ai_data.date && /^\d{4}-\d{2}-\d{2}$/.test(ai_data.date)) {
+            document.getElementById('f_date').value = ai_data.date;
+          }
+          if (ai_data.location_hint && !currentGps) {
+            document.getElementById('f_location').value = ai_data.location_hint;
+          }
 
           toggleRefundInput();
           updateTwdEstimate();
@@ -495,18 +508,47 @@
 
     function openManualModal() {
       document.getElementById('txForm').reset();
+      document.getElementById('f_tx_id').value = '';
       document.getElementById('modalTitle').textContent = '✍️ 新增消費 / 儲值紀錄';
+      document.getElementById('submitBtn').textContent = '✅ 確認儲存入帳';
       document.getElementById('previewBox').classList.add('hidden');
       document.getElementById('aiItemsBox').classList.add('hidden');
       document.getElementById('refundAmountDiv').classList.add('hidden');
       document.getElementById('f_receipt_url').value = '';
       document.getElementById('f_items_json').value = '[]';
+      document.getElementById('f_date').value = getTodayDateString();
 
-      const now = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
-      document.getElementById('f_timestamp').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())} ${pad(now.getHours())}:${pad(now.getMinutes())}`;
       captureGps();
       togglePaymentFields();
+      document.getElementById('txModal').classList.remove('hidden');
+    }
+
+    // 開啟編輯既有紀錄視窗
+    function openEditModal(txId) {
+      const tx = appState.transactions.find(item => item.tx_id === txId);
+      if (!tx) return;
+
+      document.getElementById('txForm').reset();
+      document.getElementById('f_tx_id').value = tx.tx_id;
+      document.getElementById('modalTitle').textContent = '✏️ 修改消費明細紀錄';
+      document.getElementById('submitBtn').textContent = '💾 儲存修改變更';
+      document.getElementById('previewBox').classList.add('hidden');
+      document.getElementById('aiItemsBox').classList.add('hidden');
+
+      document.getElementById('f_payment').value = tx.payment_method;
+      const isTwd = isTwdMethod(tx.payment_method);
+      document.getElementById('f_amount').value = isTwd ? tx.amount_twd : tx.amount_jpy;
+      document.getElementById('f_merchant').value = tx.merchant;
+      document.getElementById('f_category').value = tx.category;
+      document.getElementById('f_tax_status').value = tx.tax_free_status || '無退稅';
+      document.getElementById('f_refund_jpy').value = tx.pending_refund_jpy || 0;
+      document.getElementById('f_date').value = tx.date || getTodayDateString();
+      document.getElementById('f_location').value = tx.location_gps || '';
+      document.getElementById('f_receipt_url').value = tx.receipt_url || '';
+      document.getElementById('f_items_json').value = JSON.stringify(tx.items || []);
+
+      togglePaymentFields();
+      toggleRefundInput();
       document.getElementById('txModal').classList.remove('hidden');
     }
 
@@ -526,16 +568,13 @@
         amountInput.classList.remove('text-blue-600');
         amountInput.classList.add('text-amber-600');
         taxSection.classList.add('hidden');
-        if (!document.getElementById('f_merchant').value) {
-          document.getElementById('f_category').value = '門票住宿';
-        }
       } else {
         amountLabel.textContent = '日幣金額 (¥)';
         amountInput.placeholder = '例如 1580';
         amountInput.classList.remove('text-amber-600');
         amountInput.classList.add('text-blue-600');
         taxSection.classList.remove('hidden');
-        if (method === 'IC卡儲值') {
+        if (method === 'IC卡儲值' && !document.getElementById('f_merchant').value) {
           document.getElementById('f_merchant').value = '交通 IC 卡儲值';
           document.getElementById('f_category').value = '交通';
         }
@@ -574,12 +613,14 @@
 
     async function submitTransaction(e) {
       e.preventDefault();
+      const txId = document.getElementById('f_tx_id').value;
       const method = document.getElementById('f_payment').value;
       const amt = Number(document.getElementById('f_amount').value) || 0;
       const isTwd = isTwdMethod(method);
 
       const payload = {
-        action: 'save_tx',
+        action: txId ? 'edit_tx' : 'save_tx',
+        tx_id: txId,
         payment_method: method,
         amount_jpy: isTwd ? 0 : amt,
         amount_twd: isTwd ? amt : 0,
@@ -587,7 +628,7 @@
         category: document.getElementById('f_category').value,
         tax_free_status: isTwd ? '無退稅' : document.getElementById('f_tax_status').value,
         pending_refund_jpy: isTwd ? 0 : (Number(document.getElementById('f_refund_jpy').value) || 0),
-        timestamp: document.getElementById('f_timestamp').value,
+        date: document.getElementById('f_date').value,
         location_gps: document.getElementById('f_location').value,
         receipt_url: document.getElementById('f_receipt_url').value,
         items: JSON.parse(document.getElementById('f_items_json').value || '[]')
@@ -596,12 +637,16 @@
       closeTxModal();
 
       if (!navigator.onLine) {
+        if (txId) {
+          alert('離線狀態無法修改既有雲端紀錄，請在有網路時編輯！');
+          return;
+        }
         saveToOfflineQueue(payload);
         alert('目前無網路，已存入本機離線佇列，恢復網路後請點擊上方「立即上傳」！');
         return;
       }
 
-      showLoading('正在寫入 Google Sheets 帳本...');
+      showLoading(txId ? '正在更新消費紀錄...' : '正在寫入 Google Sheets 帳本...');
       try {
         const res = await fetch(getGasUrl(), {
           method: 'POST',
@@ -618,8 +663,35 @@
         }
       } catch (err) {
         hideLoading();
-        saveToOfflineQueue(payload);
-        alert('連線不穩，已自動轉存離線佇列！');
+        if (!txId) {
+          saveToOfflineQueue(payload);
+          alert('連線不穩，已自動轉存離線佇列！');
+        } else {
+          alert('更新失敗：' + err.message);
+        }
+      }
+    }
+
+    async function deleteTransaction(txId) {
+      if (!confirm('確定要刪除這筆消費紀錄嗎？刪除後將自動重新計算總花費與錢包餘額。')) return;
+      showLoading('正在刪除紀錄並重算餘額...');
+      try {
+        const res = await fetch(getGasUrl(), {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'delete_tx', tx_id: txId })
+        });
+        const json = await res.json();
+        hideLoading();
+        if (json.status === 'success') {
+          appState = json.data;
+          renderDashboard();
+        } else {
+          alert('刪除失敗：' + json.message);
+        }
+      } catch (err) {
+        hideLoading();
+        alert('刪除失敗：' + err.message);
       }
     }
 
