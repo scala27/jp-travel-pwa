@@ -47,7 +47,7 @@
   <!-- 核心數據儀表板 -->
   <main class="max-w-md mx-auto p-4 space-y-4">
     
-    <!-- 總花費卡片 -->
+    <!-- 總花費與 2026 日本退稅新制儀表卡片 -->
     <section class="bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-2xl p-5 shadow-lg">
       <div class="flex justify-between items-start gap-2">
         <div>
@@ -55,10 +55,12 @@
           <p id="totalTwd" class="text-3xl font-extrabold mt-1">NT$ 0</p>
           <p id="totalJpy" class="text-sm text-slate-300 mt-1">當地日幣累計：¥ 0</p>
         </div>
-        <div id="pendingTaxBadge" class="hidden bg-rose-500/20 border border-rose-400/40 text-rose-200 px-3 py-1.5 rounded-xl text-right shrink-0">
-          <p class="text-[11px]">待退稅金額</p>
-          <p id="pendingTaxJpy" class="text-sm font-bold">¥ 0</p>
-        </div>
+        <!-- 點擊可開啟 2026 退稅新制同店同日合併追蹤清單 -->
+        <button onclick="openTaxModal()" id="taxStatusCard" class="bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 text-rose-200 px-3 py-2 rounded-xl text-right shrink-0 transition">
+          <p class="text-[10px] text-rose-300">🇯🇵 預計可退稅 ▸</p>
+          <p id="pendingTaxJpy" class="text-sm font-extrabold text-white">¥ 0</p>
+          <p id="pendingTaxTwd" class="text-[10px] text-rose-200">約 NT$ 0</p>
+        </button>
       </div>
 
       <!-- 雙錢包即時水位 -->
@@ -80,7 +82,7 @@
     <section class="grid grid-cols-2 gap-3">
       <label class="bg-blue-600 active:bg-blue-700 text-white rounded-2xl h-14 px-3 shadow-md flex items-center justify-center gap-2 cursor-pointer font-bold text-sm select-none whitespace-nowrap">
         <span class="text-lg">📸</span>
-        <span>拍收據 AI 辨識</span>
+        <span>拍發票 / 收據 OCR</span>
         <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptCapture(event)" />
       </label>
       <button onclick="openManualModal()" class="bg-white active:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl h-14 px-3 shadow-sm flex items-center justify-center gap-2 font-bold text-sm select-none whitespace-nowrap">
@@ -104,7 +106,7 @@
   <!-- Loading 遮罩 -->
   <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex flex-col items-center justify-center text-white px-6 text-center">
     <div class="loader mb-3"></div>
-    <p id="loadingText" class="text-sm font-medium">AI 正在解析收據...</p>
+    <p id="loadingText" class="text-sm font-medium">Google Drive OCR 辨識中...</p>
     <p id="loadingSubText" class="text-xs text-slate-300 mt-1"></p>
   </div>
 
@@ -119,9 +121,9 @@
       <form id="txForm" onsubmit="submitTransaction(event)" class="space-y-3.5 mt-4">
         <input type="hidden" id="f_tx_id" />
         <input type="hidden" id="f_receipt_url" />
-        <input type="hidden" id="f_items_json" />
+        <input type="hidden" id="f_ocr_note" />
 
-        <!-- 收據縮圖預覽 -->
+        <!-- 收據/發票縮圖預覽 -->
         <div id="previewBox" class="hidden bg-slate-100 p-2 rounded-xl text-center">
           <img id="receiptPreview" class="max-h-36 mx-auto rounded-lg object-contain" />
         </div>
@@ -133,14 +135,14 @@
               <option value="日幣現金">💴 日幣現金</option>
               <option value="IC卡">🚃 交通 IC 卡扣款</option>
               <option value="日幣信用卡">💳 日幣信用卡 (海外)</option>
-              <option value="台幣信用卡">🇹🇼 台幣信用卡 (機酒/訂購)</option>
+              <option value="台幣信用卡">🇹🇼 台幣信用卡 (機酒/台灣)</option>
               <option value="台幣現金">💵 台幣現金</option>
               <option value="IC卡儲值">➕ 日幣現金儲值 IC 卡</option>
             </select>
           </div>
           <div>
             <label id="amountLabel" class="block text-xs font-bold text-slate-600 mb-1">日幣金額 (¥)</label>
-            <input type="number" id="f_amount" required oninput="updateTwdEstimate()" class="w-full border rounded-xl px-3 py-2 text-base font-bold text-blue-600" placeholder="例如 1580" />
+            <input type="number" id="f_amount" required oninput="updateTwdEstimate(); updateTaxPreview();" class="w-full border rounded-xl px-3 py-2 text-base font-bold text-blue-600" placeholder="例如 1580" />
           </div>
         </div>
 
@@ -152,33 +154,54 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1">店家 / 項目名稱</label>
-            <input type="text" id="f_merchant" required class="w-full border rounded-xl px-3 py-2 text-sm" placeholder="例如：星宇航空機票" />
+            <input type="text" id="f_merchant" required oninput="updateTaxPreview()" class="w-full border rounded-xl px-3 py-2 text-sm" placeholder="同店同日自動合併退稅" />
           </div>
           <div>
             <label class="block text-xs font-bold text-slate-600 mb-1">消費分類</label>
-            <select id="f_category" class="w-full border rounded-xl px-3 py-2 text-sm bg-slate-50">
-              <option value="餐飲">🍜 餐飲</option>
-              <option value="交通">🚝 交通</option>
-              <option value="藥妝購物">🛍️ 藥妝購物</option>
-              <option value="門票住宿">🏨 門票住宿</option>
-              <option value="伴手禮">🎁 伴手禮</option>
+            <select id="f_category" onchange="autoDetectTaxCategory()" class="w-full border rounded-xl px-3 py-2 text-sm bg-slate-50">
+              <option value="餐飲">🍜 餐飲 (不可退稅)</option>
+              <option value="交通">🚝 交通 (不可退稅)</option>
+              <option value="藥妝購物">🛍️ 藥妝購物 (可累計退稅)</option>
+              <option value="伴手禮">🎁 伴手禮 (可累計退稅)</option>
+              <option value="服飾電器">👕 服飾電器 (可累計退稅)</option>
+              <option value="門票住宿">🏨 門票住宿 (不可退稅)</option>
             </select>
           </div>
         </div>
 
-        <!-- 日本退稅區塊（台幣支付時自動隱藏） -->
-        <div id="taxSection" class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-600 mb-1">日本退稅狀態</label>
-            <select id="f_tax_status" onchange="toggleRefundInput()" class="w-full border rounded-xl px-3 py-2 text-sm bg-slate-50">
-              <option value="無退稅">無退稅 (含稅消費)</option>
-              <option value="已現場免稅">已現場免稅 (未稅結帳)</option>
-              <option value="待櫃台退稅">待櫃台/機場退稅</option>
-            </select>
+        <!-- 本趟歷史店家快選列（確保同店同日名稱一致以合併計算滿 ¥5,500） -->
+        <div id="recentMerchantsBox" class="hidden">
+          <p class="text-[11px] text-slate-500 mb-1">⚡ 同店快選（點選可直接帶入一致店名合併退稅）：</p>
+          <div id="recentMerchantsList" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <!-- 2026/11/1 日本退稅新制計算區塊（台幣支付時自動隱藏） -->
+        <div id="taxSection" class="bg-rose-50/70 border border-rose-200 rounded-xl p-3 space-y-2.5">
+          <div class="flex justify-between items-center">
+            <span class="text-xs font-bold text-rose-800">🇯🇵 2026 日本退稅新制設定</span>
+            <span id="singleTaxHint" class="text-[11px] font-bold text-rose-600">預估可退 ¥0</span>
           </div>
-          <div id="refundAmountDiv" class="hidden">
-            <label class="block text-xs font-bold text-rose-600 mb-1">預計退稅日幣 (¥)</label>
-            <input type="number" id="f_refund_jpy" class="w-full border border-rose-300 rounded-xl px-3 py-2 text-sm font-bold text-rose-600" value="0" />
+          <div class="grid grid-cols-2 gap-2.5">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">退稅資格歸類</label>
+              <select id="f_tax_status" onchange="updateTaxPreview()" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white font-medium">
+                <option value="不可退稅">不可退稅 (餐飲/交通)</option>
+                <option value="納入退稅累計">納入退稅累計 (同店滿¥5,500退)</option>
+                <option value="已機場退稅">已機場退稅完成</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">退稅實拿比例</label>
+              <select id="f_refund_rate" onchange="updateTaxPreview()" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white">
+                <option value="0.085">8.5% (百貨扣手續費)</option>
+                <option value="0.0909">9.09% (免手續費10%)</option>
+                <option value="0.074">7.4% (8%外帶食品)</option>
+              </select>
+            </div>
+          </div>
+          <div id="nonTaxableDiv">
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">扣除不可退稅項目 (¥) <span class="font-normal text-slate-400">如塑膠袋/境內飲料</span></label>
+            <input type="number" id="f_non_taxable" oninput="updateTaxPreview()" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white" value="0" min="0" />
           </div>
         </div>
 
@@ -190,16 +213,25 @@
           </div>
         </div>
 
-        <!-- AI 解析出的商品細項 -->
-        <div id="aiItemsBox" class="hidden bg-slate-50 p-3 rounded-xl border border-slate-200">
-          <p class="text-xs font-bold text-slate-600 mb-1.5">🧾 AI 辨識商品明細：</p>
-          <ul id="aiItemsList" class="text-xs text-slate-600 space-y-1 max-h-24 overflow-y-auto"></ul>
-        </div>
-
         <button type="submit" id="submitBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md mt-2">
           ✅ 確認儲存入帳
         </button>
       </form>
+    </div>
+  </div>
+
+  <!-- 2026/11/1 日本退稅新制：同店同日合併追蹤與機場核銷 Modal -->
+  <div id="taxModal" class="hidden fixed inset-0 bg-slate-900/60 z-40 flex items-end sm:items-center justify-center">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 max-h-[88vh] overflow-y-auto shadow-2xl space-y-3.5">
+      <div class="flex justify-between items-center border-b pb-2.5">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">🇯🇵 日本退稅新制｜同店同日合併總覽</h3>
+          <p class="text-[11px] text-slate-500">2026/11/1新制：店內先付含稅價，同店同日有效消費滿 ¥5,500 即可於機場退稅</p>
+        </div>
+        <button onclick="closeTaxModal()" class="text-slate-400 text-xl font-bold px-2">✕</button>
+      </div>
+
+      <div id="taxGroupList" class="space-y-2.5"></div>
     </div>
   </div>
 
@@ -236,14 +268,18 @@
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-3 gap-2">
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">初始日幣現金 (¥)</label>
-          <input type="number" id="s_init_cash" class="w-full border rounded-xl px-3 py-1.5 text-sm" />
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">初始日幣現金</label>
+          <input type="number" id="s_init_cash" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1">初始 IC 卡餘額 (¥)</label>
-          <input type="number" id="s_init_ic" class="w-full border rounded-xl px-3 py-1.5 text-sm" />
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">初始 IC 卡餘額</label>
+          <input type="number" id="s_init_ic" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
+        </div>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-600 mb-1">預設退稅比例</label>
+          <input type="number" step="0.0001" id="s_refund_rate" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
         </div>
       </div>
 
@@ -256,8 +292,9 @@
   <script>
     const DEFAULT_GAS_URL = '請在此貼上你部署後的_GAS_WEB_APP_URL';
     let appState = {
-      settings: { trip_name: '旅遊記帳', cash_rate: 0.215, ic_rate: 0.215, card_rate: 0.212, init_cash: 0, init_ic: 0 },
-      summary: { total_spent_jpy: 0, total_spent_twd: 0, cash_balance_jpy: 0, ic_balance_jpy: 0, pending_refund_jpy: 0 },
+      settings: { trip_name: '旅遊記帳', cash_rate: 0.215, ic_rate: 0.215, card_rate: 0.212, init_cash: 0, init_ic: 0, refund_rate: 0.085 },
+      summary: { total_spent_jpy: 0, total_spent_twd: 0, cash_balance_jpy: 0, ic_balance_jpy: 0, pending_refund_jpy: 0, pending_refund_twd: 0 },
+      tax_groups: [],
       transactions: []
     };
     let currentGps = '';
@@ -345,13 +382,8 @@
       document.getElementById('icBalance').textContent = `¥ ${summary.ic_balance_jpy.toLocaleString()}`;
       document.getElementById('icRateHint').textContent = `均價 ${settings.ic_rate}`;
 
-      const taxBadge = document.getElementById('pendingTaxBadge');
-      if (summary.pending_refund_jpy > 0) {
-        taxBadge.classList.remove('hidden');
-        document.getElementById('pendingTaxJpy').textContent = `¥ ${summary.pending_refund_jpy.toLocaleString()}`;
-      } else {
-        taxBadge.classList.add('hidden');
-      }
+      document.getElementById('pendingTaxJpy').textContent = `¥ ${(summary.pending_refund_jpy || 0).toLocaleString()}`;
+      document.getElementById('pendingTaxTwd').textContent = `約 NT$ ${(summary.pending_refund_twd || 0).toLocaleString()}`;
 
       document.getElementById('txCount').textContent = `共 ${transactions.length} 筆`;
       const listEl = document.getElementById('txList');
@@ -362,16 +394,16 @@
 
       listEl.innerHTML = transactions.map(tx => {
         let taxTag = '';
-        if (tx.tax_free_status === '已現場免稅') {
-          taxTag = `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0.5 rounded font-bold">已免稅(勿拆封)</span>`;
-        } else if (tx.tax_free_status === '待櫃台退稅') {
-          taxTag = `<button onclick="refundTax('${tx.tx_id}')" class="bg-rose-100 hover:bg-rose-200 text-rose-700 text-[10px] px-2 py-0.5 rounded font-bold">待退 ¥${tx.pending_refund_jpy} (核銷)</button>`;
-        } else if (tx.tax_free_status === '已櫃台退稅') {
-          taxTag = `<span class="bg-slate-200 text-slate-600 text-[10px] px-1.5 py-0.5 rounded">已退稅完成</span>`;
+        if (tx.computed_tax_status === '待機場退稅') {
+          taxTag = `<button onclick="openTaxModal()" class="bg-rose-100 text-rose-700 text-[10px] px-1.5 py-0.5 rounded font-bold">✅ 達標可退 ¥${tx.est_refund_jpy}</button>`;
+        } else if (tx.computed_tax_status === '累計中(未滿¥5,500)') {
+          taxTag = `<button onclick="openTaxModal()" class="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded font-bold">⏳ 累計中(差¥${tx.group_shortfall_jpy})</button>`;
+        } else if (tx.computed_tax_status === '已機場退稅') {
+          taxTag = `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0.5 rounded font-bold">已機場退稅</span>`;
         }
 
         const receiptBtn = tx.receipt_url 
-          ? `<a href="${tx.receipt_url}" target="_blank" class="text-blue-600 text-[11px] underline ml-1">收據</a>` 
+          ? `<a href="${tx.receipt_url}" target="_blank" class="text-blue-600 text-[11px] underline ml-1">憑證</a>` 
           : '';
 
         const isTwdOnly = (tx.amount_jpy === 0 || isTwdMethod(tx.payment_method));
@@ -392,7 +424,7 @@
                 <span>${tx.date}</span> • <span>${tx.payment_method}</span>
                 ${receiptBtn}
               </div>
-              <div class="flex items-center gap-1.5 pt-0.5">
+              <div class="flex items-center gap-1.5 pt-0.5 flex-wrap">
                 ${taxTag}
                 <button onclick="openEditModal('${tx.tx_id}')" class="text-[11px] bg-slate-100 hover:bg-slate-200 text-slate-600 px-2 py-0.5 rounded font-medium">✏️ 編輯</button>
                 <button onclick="deleteTransaction('${tx.tx_id}')" class="text-[11px] bg-rose-50 hover:bg-rose-100 text-rose-600 px-2 py-0.5 rounded font-medium">🗑️</button>
@@ -406,16 +438,18 @@
       }).join('');
     }
 
+    /**
+     * 拍攝台灣統一發票/收據 或 日本感熱紙收據，送交 Google Drive 原生 OCR 辨識
+     */
     async function handleReceiptCapture(event) {
       const file = event.target.files[0];
       if (!file) return;
 
       captureGps();
-      showLoading('壓縮收據照片中...', '最佳化傳輸體積以加速辨識');
+      showLoading('壓縮憑證照片中...', '最佳化傳輸體積以加速上傳');
 
       let compressedBase64 = '';
       try {
-        // 壓縮至 768px / 0.65 品質（約 70KB），大幅縮短行動網路上傳時間
         compressedBase64 = await compressImage(file, 768, 0.65);
 
         if (!navigator.onLine) {
@@ -428,9 +462,8 @@
         }
 
         const kbSize = Math.round((compressedBase64.length * 3) / 4 / 1024);
-        showLoading(`呼叫 Gemini AI 辨識中 (${kbSize} KB)...`, '若超過 25 秒將自動切換為手動輸入');
+        showLoading(`Google Drive OCR 辨識中 (${kbSize} KB)...`, '自動判讀台灣發票與日本收據');
 
-        // 加入 25 秒強制逾時保護，絕不再無止盡卡住
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 25000);
 
@@ -439,7 +472,7 @@
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           signal: controller.signal,
           body: JSON.stringify({
-            action: 'analyze_receipt',
+            action: 'ocr_receipt',
             image_base64: compressedBase64,
             mime_type: 'image/jpeg'
           })
@@ -450,38 +483,45 @@
         hideLoading();
 
         if (json.status === 'success') {
-          const { receipt_url, ai_data } = json.data;
+          const { receipt_url, ocr_data } = json.data;
           openManualModal();
-          document.getElementById('modalTitle').textContent = '🤖 AI 收據辨識結果確認';
+          const regionLabel = ocr_data.region === 'TW' ? '🇹🇼 台灣發票/收據' : '🇯🇵 日本收據';
+          document.getElementById('modalTitle').textContent = `📄 OCR 辨識確認 (${regionLabel})`;
           document.getElementById('receiptPreview').src = compressedBase64;
           document.getElementById('previewBox').classList.remove('hidden');
 
           document.getElementById('f_receipt_url').value = receipt_url || '';
-          document.getElementById('f_merchant').value = ai_data.merchant || '';
-          document.getElementById('f_amount').value = ai_data.amount_jpy || '';
-          document.getElementById('f_category').value = ai_data.category || '藥妝購物';
-          document.getElementById('f_tax_status').value = ai_data.tax_free_status || '無退稅';
-          document.getElementById('f_refund_jpy').value = ai_data.pending_refund_jpy || 0;
-          if (ai_data.date && /^\d{4}-\d{2}-\d{2}$/.test(ai_data.date)) {
-            document.getElementById('f_date').value = ai_data.date;
+          document.getElementById('f_merchant').value = ocr_data.merchant || '';
+          document.getElementById('f_category').value = ocr_data.category || '餐飲';
+
+          // 依據辨識出的國別自動切換幣別與付款方式
+          if (ocr_data.region === 'TW') {
+            document.getElementById('f_payment').value = '台幣信用卡';
+          } else {
+            document.getElementById('f_payment').value = '日幣現金';
           }
-          if (ai_data.location_hint && !currentGps) {
-            document.getElementById('f_location').value = ai_data.location_hint;
+          togglePaymentFields();
+
+          if (ocr_data.amount > 0) {
+            document.getElementById('f_amount').value = ocr_data.amount;
+          }
+          if (ocr_data.date && /^\d{4}-\d{2}-\d{2}$/.test(ocr_data.date)) {
+            document.getElementById('f_date').value = ocr_data.date;
           }
 
-          toggleRefundInput();
+          // 設定退稅新制欄位
+          if (ocr_data.region === 'JP' && ocr_data.tax_eligible) {
+            document.getElementById('f_tax_status').value = '納入退稅累計';
+            document.getElementById('f_non_taxable').value = ocr_data.non_taxable_jpy || 0;
+          } else {
+            document.getElementById('f_tax_status').value = '不可退稅';
+            document.getElementById('f_non_taxable').value = 0;
+          }
+
           updateTwdEstimate();
-
-          const items = ai_data.items || [];
-          document.getElementById('f_items_json').value = JSON.stringify(items);
-          if (items.length > 0) {
-            document.getElementById('aiItemsBox').classList.remove('hidden');
-            document.getElementById('aiItemsList').innerHTML = items.map(it => 
-              `<li>• ${it.name} x${it.qty || 1} — ¥${it.price_jpy}</li>`
-            ).join('');
-          }
+          updateTaxPreview();
         } else {
-          alert('AI 辨識失敗，請改為手動輸入：\n' + json.message);
+          alert('OCR 辨識失敗，請改為手動輸入：\n' + json.message);
           openManualModal();
           document.getElementById('receiptPreview').src = compressedBase64;
           document.getElementById('previewBox').classList.remove('hidden');
@@ -489,8 +529,8 @@
       } catch (err) {
         hideLoading();
         const msg = err.name === 'AbortError' 
-          ? '行動網路上傳逾時（超過 25 秒），已為您保留收據照片，請直接手動輸入金額即可！' 
-          : '連線發生異常：' + err.message;
+          ? '網路上傳逾時（超過 25 秒），已保留收據照片，請直接手動輸入金額！' 
+          : '連線異常：' + err.message;
         alert(msg);
         openManualModal();
         if (compressedBase64) {
@@ -527,20 +567,76 @@
       });
     }
 
+    function renderRecentMerchants() {
+      const uniqueMerchants = [...new Set(appState.transactions.map(t => t.merchant).filter(Boolean))].slice(0, 6);
+      const box = document.getElementById('recentMerchantsBox');
+      const list = document.getElementById('recentMerchantsList');
+      if (uniqueMerchants.length === 0) {
+        box.classList.add('hidden');
+        return;
+      }
+      box.classList.remove('hidden');
+      list.innerHTML = uniqueMerchants.map(name => 
+        `<button type="button" onclick="selectRecentMerchant('${name.replace(/'/g, "\\'")}')" class="text-[11px] bg-slate-100 hover:bg-blue-100 text-slate-700 px-2 py-0.5 rounded-full border border-slate-200">${name}</button>`
+      ).join('');
+    }
+
+    function selectRecentMerchant(name) {
+      document.getElementById('f_merchant').value = name;
+      updateTaxPreview();
+    }
+
+    function autoDetectTaxCategory() {
+      const cat = document.getElementById('f_category').value;
+      const method = document.getElementById('f_payment').value;
+      if (isTwdMethod(method)) return;
+
+      if (['藥妝購物', '伴手禮', '服飾電器'].includes(cat)) {
+        document.getElementById('f_tax_status').value = '納入退稅累計';
+      } else {
+        document.getElementById('f_tax_status').value = '不可退稅';
+      }
+      updateTaxPreview();
+    }
+
+    function updateTaxPreview() {
+      const method = document.getElementById('f_payment').value;
+      if (isTwdMethod(method)) return;
+
+      const status = document.getElementById('f_tax_status').value;
+      const amt = Number(document.getElementById('f_amount').value) || 0;
+      const nonTax = Number(document.getElementById('f_non_taxable').value) || 0;
+      const rate = Number(document.getElementById('f_refund_rate').value) || 0.085;
+      const hintEl = document.getElementById('singleTaxHint');
+
+      if (status === '不可退稅') {
+        hintEl.textContent = '不可退稅項目';
+        return;
+      }
+      const validJpy = Math.max(0, amt - nonTax);
+      const estRefund = Math.round(validJpy * rate);
+      if (validJpy >= 5500) {
+        hintEl.textContent = `單筆達標！預估退 ¥${estRefund.toLocaleString()}`;
+      } else {
+        hintEl.textContent = `有效 ¥${validJpy.toLocaleString()}（同店滿¥5,500退 ¥${estRefund.toLocaleString()}）`;
+      }
+    }
+
     function openManualModal() {
       document.getElementById('txForm').reset();
       document.getElementById('f_tx_id').value = '';
       document.getElementById('modalTitle').textContent = '✍️ 新增消費 / 儲值紀錄';
       document.getElementById('submitBtn').textContent = '✅ 確認儲存入帳';
       document.getElementById('previewBox').classList.add('hidden');
-      document.getElementById('aiItemsBox').classList.add('hidden');
-      document.getElementById('refundAmountDiv').classList.add('hidden');
       document.getElementById('f_receipt_url').value = '';
-      document.getElementById('f_items_json').value = '[]';
+      document.getElementById('f_ocr_note').value = '';
       document.getElementById('f_date').value = getTodayDateString();
+      document.getElementById('f_refund_rate').value = String(appState.settings.refund_rate || 0.085);
 
+      renderRecentMerchants();
       captureGps();
       togglePaymentFields();
+      updateTaxPreview();
       document.getElementById('txModal').classList.remove('hidden');
     }
 
@@ -553,22 +649,23 @@
       document.getElementById('modalTitle').textContent = '✏️ 修改消費明細紀錄';
       document.getElementById('submitBtn').textContent = '💾 儲存修改變更';
       document.getElementById('previewBox').classList.add('hidden');
-      document.getElementById('aiItemsBox').classList.add('hidden');
 
       document.getElementById('f_payment').value = tx.payment_method;
       const isTwd = isTwdMethod(tx.payment_method);
       document.getElementById('f_amount').value = isTwd ? tx.amount_twd : tx.amount_jpy;
       document.getElementById('f_merchant').value = tx.merchant;
       document.getElementById('f_category').value = tx.category;
-      document.getElementById('f_tax_status').value = tx.tax_free_status || '無退稅';
-      document.getElementById('f_refund_jpy').value = tx.pending_refund_jpy || 0;
+      document.getElementById('f_tax_status').value = tx.raw_tax_status || '不可退稅';
+      document.getElementById('f_non_taxable').value = tx.non_taxable_jpy || 0;
+      document.getElementById('f_refund_rate').value = String(tx.refund_rate || 0.085);
       document.getElementById('f_date').value = tx.date || getTodayDateString();
       document.getElementById('f_location').value = tx.location_gps || '';
       document.getElementById('f_receipt_url').value = tx.receipt_url || '';
-      document.getElementById('f_items_json').value = JSON.stringify(tx.items || []);
+      document.getElementById('f_ocr_note').value = tx.ocr_note || '';
 
+      renderRecentMerchants();
       togglePaymentFields();
-      toggleRefundInput();
+      updateTaxPreview();
       document.getElementById('txModal').classList.remove('hidden');
     }
 
@@ -602,20 +699,6 @@
       updateTwdEstimate();
     }
 
-    function toggleRefundInput() {
-      const status = document.getElementById('f_tax_status').value;
-      const div = document.getElementById('refundAmountDiv');
-      if (status === '待櫃台退稅') {
-        div.classList.remove('hidden');
-        const jpy = Number(document.getElementById('f_amount').value) || 0;
-        if (!Number(document.getElementById('f_refund_jpy').value) && jpy > 0) {
-          document.getElementById('f_refund_jpy').value = Math.round(jpy * 0.085);
-        }
-      } else {
-        div.classList.add('hidden');
-      }
-    }
-
     function updateTwdEstimate() {
       const amt = Number(document.getElementById('f_amount').value) || 0;
       const method = document.getElementById('f_payment').value;
@@ -646,12 +729,13 @@
         amount_twd: isTwd ? amt : 0,
         merchant: document.getElementById('f_merchant').value,
         category: document.getElementById('f_category').value,
-        tax_free_status: isTwd ? '無退稅' : document.getElementById('f_tax_status').value,
-        pending_refund_jpy: isTwd ? 0 : (Number(document.getElementById('f_refund_jpy').value) || 0),
+        tax_free_status: isTwd ? '不可退稅' : document.getElementById('f_tax_status').value,
+        non_taxable_jpy: isTwd ? 0 : (Number(document.getElementById('f_non_taxable').value) || 0),
+        refund_rate: isTwd ? 0 : (Number(document.getElementById('f_refund_rate').value) || 0.085),
         date: document.getElementById('f_date').value,
         location_gps: document.getElementById('f_location').value,
         receipt_url: document.getElementById('f_receipt_url').value,
-        items: JSON.parse(document.getElementById('f_items_json').value || '[]')
+        ocr_note: document.getElementById('f_ocr_note').value
       };
 
       closeTxModal();
@@ -693,8 +777,8 @@
     }
 
     async function deleteTransaction(txId) {
-      if (!confirm('確定要刪除這筆消費紀錄嗎？刪除後將自動重新計算總花費與錢包餘額。')) return;
-      showLoading('正在刪除紀錄並重算餘額...');
+      if (!confirm('確定要刪除這筆消費紀錄嗎？刪除後將自動重新計算總花費、餘額與同店退稅累計。')) return;
+      showLoading('正在刪除紀錄並重算...');
       try {
         const res = await fetch(getGasUrl(), {
           method: 'POST',
@@ -715,14 +799,58 @@
       }
     }
 
-    async function refundTax(txId) {
-      if (!confirm('確定已於退稅櫃台領回日幣現金？系統將自動回補至日幣現金餘額。')) return;
-      showLoading('正在核銷退稅並回補現金餘額...');
+    /**
+     * 2026 日本退稅新制：同店同日合併追蹤視窗與一鍵機場核銷
+     */
+    function openTaxModal() {
+      const listEl = document.getElementById('taxGroupList');
+      const groups = appState.tax_groups || [];
+      if (groups.length === 0) {
+        listEl.innerHTML = `<div class="text-center py-6 text-slate-400 text-xs">目前尚無納入退稅累計的日本購物紀錄</div>`;
+      } else {
+        listEl.innerHTML = groups.map(g => {
+          const badge = g.is_qualified
+            ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold">✅ 已滿¥5,500門檻</span>`
+            : `<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded font-bold">⏳ 尚差 ¥${g.shortfall_jpy.toLocaleString()}</span>`;
+
+          const actionBtn = g.is_qualified
+            ? `<button onclick='refundTaxGroup(${JSON.stringify(g.tx_ids)})' class="w-full mt-2 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2 rounded-lg">✈️ 機場已核銷退稅 (回補 ¥${g.total_est_refund_jpy.toLocaleString()})</button>`
+            : '';
+
+          return `
+            <div class="border border-slate-200 rounded-xl p-3 bg-slate-50">
+              <div class="flex justify-between items-start gap-2">
+                <div>
+                  <p class="font-bold text-sm text-slate-800">${g.merchant}</p>
+                  <p class="text-[11px] text-slate-500">${g.date} • 共 ${g.tx_ids.length} 筆合併</p>
+                </div>
+                ${badge}
+              </div>
+              <div class="mt-2 flex justify-between items-center text-xs bg-white p-2 rounded-lg border border-slate-100">
+                <span>有效含稅累計：<strong>¥${g.total_eligible_jpy.toLocaleString()}</strong></span>
+                <span class="text-rose-600 font-bold">預計退：¥${g.total_est_refund_jpy.toLocaleString()}</span>
+              </div>
+              ${actionBtn}
+            </div>
+          `;
+        }).join('');
+      }
+      document.getElementById('taxModal').classList.remove('hidden');
+    }
+
+    function closeTaxModal() {
+      document.getElementById('taxModal').classList.add('hidden');
+    }
+
+    async function refundTaxGroup(txIds) {
+      if (!confirm('確定已於機場海關完成查驗並領回退稅款？系統將自動回補至日幣現金餘額並扣除總花費。')) return;
+      closeTaxModal();
+      showLoading('正在核銷整組退稅並回補現金...');
       try {
         const res = await fetch(getGasUrl(), {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'refund_tax', tx_id: txId })
+          body: JSON.stringify({ action: 'refund_tax_group', tx_ids: txIds })
         });
         const json = await res.json();
         hideLoading();
@@ -779,6 +907,7 @@
       document.getElementById('s_card_rate').value = appState.settings.card_rate;
       document.getElementById('s_init_cash').value = appState.settings.init_cash;
       document.getElementById('s_init_ic').value = appState.settings.init_ic;
+      document.getElementById('s_refund_rate').value = appState.settings.refund_rate || 0.085;
       document.getElementById('settingsModal').classList.remove('hidden');
     }
 
@@ -807,7 +936,8 @@
             ic_rate: Number(document.getElementById('s_ic_rate').value),
             card_rate: Number(document.getElementById('s_card_rate').value),
             init_cash: Number(document.getElementById('s_init_cash').value),
-            init_ic: Number(document.getElementById('s_init_ic').value)
+            init_ic: Number(document.getElementById('s_init_ic').value),
+            refund_rate: Number(document.getElementById('s_refund_rate').value)
           })
         });
         const json = await res.json();
