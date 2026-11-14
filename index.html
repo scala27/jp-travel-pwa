@@ -15,8 +15,6 @@
     body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     .loader { border: 3px solid #e2e8f0; border-top: 3px solid #2563eb; border-radius: 50%; width: 28px; height: 28px; animation: spin 0.8s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-    .no-scrollbar::-webkit-scrollbar { display: none; }
-    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="bg-slate-100 text-slate-800 pb-24">
@@ -122,58 +120,64 @@
     <p id="loadingSubText" class="text-xs text-slate-300 mt-1"></p>
   </div>
 
-  <!-- 新增 / 編輯記帳 Modal（3 秒極簡輸入介面） -->
+  <!-- 消費明細輸入 / 編輯 Modal（由上而下直覺線性動線） -->
   <div id="txModal" class="hidden fixed inset-0 bg-slate-900/60 z-40 flex items-end sm:items-center justify-center">
     <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 max-h-[92vh] overflow-y-auto shadow-2xl">
       <div class="flex justify-between items-center pb-3 border-b">
-        <h3 id="modalTitle" class="text-base font-bold">✍️ 3 秒快速記帳</h3>
+        <h3 id="modalTitle" class="text-base font-bold">🧾 消費明細</h3>
         <button onclick="closeTxModal()" class="text-slate-400 text-xl font-bold px-2">✕</button>
       </div>
 
-      <form id="txForm" onsubmit="submitTransaction(event)" class="space-y-3.5 mt-3.5">
+      <form id="txForm" onsubmit="submitTransaction(event)" class="space-y-4 mt-4">
         <input type="hidden" id="f_tx_id" />
         <input type="hidden" id="f_receipt_url" />
         <input type="hidden" id="f_ocr_note" />
+        <input type="hidden" id="f_location" />
         <input type="hidden" id="f_payment" value="日幣現金" />
         <input type="hidden" id="f_category" value="餐飲" />
 
-        <!-- 常用情境一鍵快捷模板（新增模式顯示） -->
-        <div id="quickTemplatesBox" class="space-y-1.5">
-          <p class="text-[11px] font-bold text-slate-500">⚡ 一鍵情境模板（自動套用分類與付款方式）：</p>
-          <div class="flex gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
-            <button type="button" onclick="applyQuickTemplate('交通', 'IC卡', '沖繩單軌電車')" class="shrink-0 bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 px-2.5 py-1.5 rounded-xl text-xs font-bold">🚃 單軌電車</button>
-            <button type="button" onclick="applyQuickTemplate('餐飲', 'IC卡', '便利商店')" class="shrink-0 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 px-2.5 py-1.5 rounded-xl text-xs font-bold">🏪 超商零食</button>
-            <button type="button" onclick="applyQuickTemplate('餐飲', '日幣現金', '咖啡飲品')" class="shrink-0 bg-orange-50 hover:bg-orange-100 text-orange-800 border border-orange-200 px-2.5 py-1.5 rounded-xl text-xs font-bold">☕ 咖啡飲品</button>
-            <button type="button" onclick="applyQuickTemplate('藥妝購物', '日幣信用卡', '藥妝採購')" class="shrink-0 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200 px-2.5 py-1.5 rounded-xl text-xs font-bold">🛍️ 藥妝採購</button>
-          </div>
-        </div>
-
-        <!-- 收據/發票縮圖預覽 -->
+        <!-- 收據/發票縮圖預覽（僅 OCR 模式顯示） -->
         <div id="previewBox" class="hidden bg-slate-100 p-2 rounded-xl text-center">
           <img id="receiptPreview" class="max-h-36 mx-auto rounded-lg object-contain" />
         </div>
 
-        <!-- 金額與內建隨手計算機 -->
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2">
-          <div class="flex justify-between items-center">
-            <label id="amountLabel" class="text-xs font-bold text-slate-600">日幣金額 (¥)</label>
-            <span class="text-xs text-blue-700 font-medium">約 <strong id="twdEstimateText" class="text-sm">NT$ 0</strong></span>
+        <!-- 步驟 1：消費日期 -->
+        <div>
+          <div class="flex justify-between items-center mb-1">
+            <label for="f_date" class="text-xs font-bold text-slate-600">消費日期</label>
+            <span id="gpsBadge" class="text-[11px] text-slate-400">📍 定位中</span>
           </div>
-          <input type="text" inputmode="decimal" id="f_amount" required oninput="handleAmountInput()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2 text-xl font-extrabold text-blue-600 tracking-wide" placeholder="輸入金額或算式，如 1200+450" />
-          <!-- 隨手計算機快捷算式列 -->
-          <div class="grid grid-cols-6 gap-1.5 pt-0.5">
-            <button type="button" onclick="appendCalcOp('+')" class="bg-white active:bg-slate-200 border border-slate-200 rounded-lg py-1.5 text-sm font-bold text-slate-700">＋</button>
-            <button type="button" onclick="appendCalcOp('-')" class="bg-white active:bg-slate-200 border border-slate-200 rounded-lg py-1.5 text-sm font-bold text-slate-700">－</button>
-            <button type="button" onclick="appendCalcOp('×')" class="bg-white active:bg-slate-200 border border-slate-200 rounded-lg py-1.5 text-sm font-bold text-slate-700">×</button>
-            <button type="button" onclick="appendCalcOp('÷')" class="bg-white active:bg-slate-200 border border-slate-200 rounded-lg py-1.5 text-sm font-bold text-slate-700">÷</button>
-            <button type="button" onclick="evaluateAmountCalc()" class="bg-blue-600 active:bg-blue-700 text-white rounded-lg py-1.5 text-sm font-bold">＝</button>
-            <button type="button" onclick="clearAmountCalc()" class="bg-slate-200 active:bg-slate-300 text-slate-700 rounded-lg py-1.5 text-xs font-bold">清除</button>
+          <input type="date" id="f_date" required class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-medium text-slate-800 bg-slate-50" />
+        </div>
+
+        <!-- 步驟 2：支付方式（依幣別／卡片分組：日幣、IC卡、台幣各一列） -->
+        <div>
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">支付方式</label>
+          <div id="paymentGrid" class="grid grid-cols-2 gap-1.5">
+            <!-- 第一列：日幣 -->
+            <button type="button" data-pay="日幣現金" onclick="selectPaymentPill('日幣現金')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">💴 日幣現金</button>
+            <button type="button" data-pay="日幣信用卡" onclick="selectPaymentPill('日幣信用卡')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">💳 日幣刷卡</button>
+            <!-- 第二列：IC卡 -->
+            <button type="button" data-pay="IC卡" onclick="selectPaymentPill('IC卡')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">🚃 IC卡扣款</button>
+            <button type="button" data-pay="IC卡儲值" onclick="selectPaymentPill('IC卡儲值')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">➕ IC卡儲值</button>
+            <!-- 第三列：台幣 -->
+            <button type="button" data-pay="台幣現金" onclick="selectPaymentPill('台幣現金')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">💵 台幣現金</button>
+            <button type="button" data-pay="台幣信用卡" onclick="selectPaymentPill('台幣信用卡')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">🇹🇼 台幣刷卡</button>
           </div>
         </div>
 
-        <!-- 一鍵點選：消費分類 6 宮格大圖示 -->
+        <!-- 步驟 3：金額（依據上方選擇的幣別動態切換標籤） -->
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1.5">
+          <div class="flex justify-between items-center">
+            <label id="amountLabel" for="f_amount" class="text-xs font-bold text-slate-600">日幣金額 (¥)</label>
+            <span class="text-xs text-blue-700 font-medium">約 <strong id="twdEstimateText" class="text-sm">NT$ 0</strong></span>
+          </div>
+          <input type="number" inputmode="numeric" id="f_amount" required min="1" step="1" oninput="handleAmountInput()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xl font-extrabold text-blue-600 tracking-wide" placeholder="請輸入金額，例如 1580" />
+        </div>
+
+        <!-- 步驟 4：消費分類（6 宮格大圖示點選） -->
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5">消費分類（點選圖示）</label>
+          <label class="block text-xs font-bold text-slate-600 mb-1.5">消費分類</label>
           <div id="categoryGrid" class="grid grid-cols-3 gap-1.5">
             <button type="button" data-cat="餐飲" onclick="selectCategoryPill('餐飲')" class="cat-pill border rounded-xl py-2 px-1 text-xs font-bold flex items-center justify-center gap-1 transition">🍜 餐飲</button>
             <button type="button" data-cat="交通" onclick="selectCategoryPill('交通')" class="cat-pill border rounded-xl py-2 px-1 text-xs font-bold flex items-center justify-center gap-1 transition">🚝 交通</button>
@@ -184,39 +188,17 @@
           </div>
         </div>
 
-        <!-- 一鍵點選：支付方式 6 格膠囊 -->
+        <!-- 步驟 5：店家 / 項目名稱（選填，留白自動帶入分類名稱） -->
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5">支付方式（點選切換）</label>
-          <div id="paymentGrid" class="grid grid-cols-3 gap-1.5">
-            <button type="button" data-pay="日幣現金" onclick="selectPaymentPill('日幣現金')" class="pay-pill border rounded-xl py-2 px-1 text-[11px] font-bold transition">💴 日幣現金</button>
-            <button type="button" data-pay="IC卡" onclick="selectPaymentPill('IC卡')" class="pay-pill border rounded-xl py-2 px-1 text-[11px] font-bold transition">🚃 IC卡扣款</button>
-            <button type="button" data-pay="日幣信用卡" onclick="selectPaymentPill('日幣信用卡')" class="pay-pill border rounded-xl py-2 px-1 text-[11px] font-bold transition">💳 日幣刷卡</button>
-            <button type="button" data-pay="台幣信用卡" onclick="selectPaymentPill('台幣信用卡')" class="pay-pill border rounded-xl py-2 px-1 text-[11px] font-bold transition">🇹🇼 台幣刷卡</button>
-            <button type="button" data-pay="台幣現金" onclick="selectPaymentPill('台幣現金')" class="pay-pill border rounded-xl py-2 px-1 text-[11px] font-bold transition">💵 台幣現金</button>
-            <button type="button" data-pay="IC卡儲值" onclick="selectPaymentPill('IC卡儲值')" class="pay-pill border rounded-xl py-2 px-1 text-[11px] font-bold transition">➕ IC卡儲值</button>
-          </div>
-        </div>
-
-        <!-- 店家 / 項目名稱（改為選填，留白自動帶入分類名稱） -->
-        <div>
-          <div class="flex justify-between items-center mb-1">
-            <label class="text-xs font-bold text-slate-600">店家 / 項目名稱 <span class="font-normal text-slate-400">（選填，留白自動帶入分類）</span></label>
-            <span id="gpsBadge" class="text-[11px] text-slate-400">📍 定位中</span>
-          </div>
+          <label for="f_merchant" class="block text-xs font-bold text-slate-600 mb-1">店家 / 項目名稱 <span class="font-normal text-slate-400">（選填，留白自動帶入分類）</span></label>
           <input type="text" id="f_merchant" oninput="updateTaxPreview()" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm" placeholder="不輸入也可直接儲存（同店退稅請填一致店名）" />
         </div>
 
-        <!-- 本趟歷史店家快選列 -->
-        <div id="recentMerchantsBox" class="hidden">
-          <p class="text-[11px] text-slate-500 mb-1">⚡ 同店快選：</p>
-          <div id="recentMerchantsList" class="flex flex-wrap gap-1.5"></div>
-        </div>
-
-        <!-- 2026/11/1 日本退稅新制計算區塊 -->
+        <!-- 步驟 6：2026/11/1 日本退稅新制計算區塊（僅日幣支付顯示） -->
         <div id="taxSection" class="bg-rose-50/70 border border-rose-200 rounded-xl p-3 space-y-2.5">
           <div class="flex justify-between items-center">
             <span class="text-xs font-bold text-rose-800">🇯🇵 2026 日本退稅新制設定</span>
-            <span id="singleTaxHint" class="text-[11px] font-bold text-rose-600">預估可退 ¥0</span>
+            <span id="singleTaxHint" class="text-[11px] font-bold text-rose-600">不可退稅項目</span>
           </div>
           <div class="grid grid-cols-2 gap-2.5">
             <div>
@@ -242,18 +224,7 @@
           </div>
         </div>
 
-        <!-- 日期與地點（收合至底部一行） -->
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="block text-[11px] font-bold text-slate-500 mb-1">消費日期</label>
-            <input type="date" id="f_date" required class="w-full border rounded-xl px-2.5 py-1.5 text-xs text-slate-700 bg-white" />
-          </div>
-          <div>
-            <label class="block text-[11px] font-bold text-slate-500 mb-1">地點備註（選填）</label>
-            <input type="text" id="f_location" class="w-full border rounded-xl px-3 py-1.5 text-xs text-slate-600" placeholder="GPS 或地標" />
-          </div>
-        </div>
-
+        <!-- 步驟 7：儲存／刪除操作列 -->
         <div class="flex gap-2 pt-1">
           <button type="button" id="modalDeleteBtn" onclick="deleteFromEditModal()" class="hidden bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold py-3 px-4 rounded-xl text-sm shrink-0">
             🗑️ 刪除
@@ -387,91 +358,9 @@
       return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
     }
 
-    /**
-     * 安全算式解析器（支援 +, -, *, ×, /, ÷ 運算，不使用 eval）
-     */
-    function parseSafeMathExpression(rawStr) {
-      const cleaned = String(rawStr || '')
-        .replace(/×/g, '*')
-        .replace(/÷/g, '/')
-        .replace(/,/g, '')
-        .replace(/\s+/g, '');
-      if (!cleaned) return 0;
-      if (/^[0-9.]+$/.test(cleaned)) return Number(cleaned) || 0;
-      if (!/^[0-9+\-*/.()]+$/.test(cleaned)) return NaN;
-
-      try {
-        const tokens = cleaned.match(/(\d+\.?\d*|\.\d+|[+\-*/()])/g);
-        if (!tokens) return NaN;
-        let pos = 0;
-        const parseExpr = () => {
-          let val = parseTerm();
-          while (pos < tokens.length && (tokens[pos] === '+' || tokens[pos] === '-')) {
-            const op = tokens[pos++];
-            const right = parseTerm();
-            val = op === '+' ? val + right : val - right;
-          }
-          return val;
-        };
-        const parseTerm = () => {
-          let val = parseFactor();
-          while (pos < tokens.length && (tokens[pos] === '*' || tokens[pos] === '/')) {
-            const op = tokens[pos++];
-            const right = parseFactor();
-            if (op === '/' && right === 0) return NaN;
-            val = op === '*' ? val * right : val / right;
-          }
-          return val;
-        };
-        const parseFactor = () => {
-          if (tokens[pos] === '+') { pos++; return parseFactor(); }
-          if (tokens[pos] === '-') { pos++; return -parseFactor(); }
-          if (tokens[pos] === '(') {
-            pos++;
-            const val = parseExpr();
-            if (tokens[pos] === ')') pos++;
-            return val;
-          }
-          return Number(tokens[pos++]);
-        };
-        const res = parseExpr();
-        return Number.isFinite(res) ? res : NaN;
-      } catch (e) {
-        return NaN;
-      }
-    }
-
-    function getComputedAmountValue() {
-      const raw = document.getElementById('f_amount').value;
-      const val = parseSafeMathExpression(raw);
+    function getAmountValue() {
+      const val = Number(document.getElementById('f_amount').value);
       return Number.isFinite(val) ? Math.max(0, Math.round(val)) : 0;
-    }
-
-    function appendCalcOp(op) {
-      const input = document.getElementById('f_amount');
-      const v = input.value.trim();
-      if (!v) return;
-      if (/[+\-×÷*/]$/.test(v)) {
-        input.value = v.slice(0, -1) + op;
-      } else {
-        input.value = v + op;
-      }
-      input.focus();
-      handleAmountInput();
-    }
-
-    function evaluateAmountCalc() {
-      const input = document.getElementById('f_amount');
-      const val = getComputedAmountValue();
-      input.value = val > 0 ? String(val) : '';
-      handleAmountInput();
-    }
-
-    function clearAmountCalc() {
-      const input = document.getElementById('f_amount');
-      input.value = '';
-      input.focus();
-      handleAmountInput();
     }
 
     function handleAmountInput() {
@@ -490,9 +379,7 @@
         (pos) => {
           currentGps = `${pos.coords.latitude.toFixed(5)}, ${pos.coords.longitude.toFixed(5)}`;
           badge.textContent = '📍 已定位';
-          if (!document.getElementById('f_location').value) {
-            document.getElementById('f_location').value = currentGps;
-          }
+          document.getElementById('f_location').value = currentGps;
         },
         () => { badge.textContent = '📍 未開啟定位'; },
         { enableHighAccuracy: true, timeout: 6000 }
@@ -606,7 +493,6 @@
         return;
       }
 
-      // 依消費日期分組計算當日小計
       const dailyTotals = {};
       sortedTx.forEach(tx => {
         const dKey = tx.date || '未指定日期';
@@ -666,7 +552,6 @@
           : `<p class="font-extrabold text-[15px] text-slate-900">¥ ${tx.amount_jpy.toLocaleString()}</p>
              <p class="text-[11px] text-slate-400">NT$ ${tx.amount_twd.toLocaleString()}</p>`;
 
-        // 極簡無按鈕消費卡片：點擊卡片編輯、左滑露出刪除
         htmlBlocks.push(`
           <div class="relative overflow-hidden rounded-2xl bg-rose-600 shadow-xs">
             <button type="button" onclick="event.stopPropagation(); deleteTransaction('${tx.tx_id}')" class="absolute inset-y-0 right-0 w-20 flex flex-col items-center justify-center text-white font-bold text-xs">
@@ -820,7 +705,7 @@
           const { receipt_url, ocr_data } = json.data;
           openManualModal(sourceType === 'camera');
           const regionLabel = ocr_data.region === 'TW' ? '🇹🇼 台灣發票/收據' : '🇯🇵 日本收據';
-          document.getElementById('modalTitle').textContent = `📄 OCR 辨識確認 (${regionLabel})`;
+          document.getElementById('modalTitle').textContent = `🧾 消費明細 (${regionLabel})`;
           document.getElementById('receiptPreview').src = compressedBase64;
           document.getElementById('previewBox').classList.remove('hidden');
 
@@ -893,14 +778,6 @@
       });
     }
 
-    // 一鍵情境模板
-    function applyQuickTemplate(cat, pay, merchantHint) {
-      selectCategoryPill(cat, true);
-      selectPaymentPill(pay);
-      document.getElementById('f_merchant').value = merchantHint;
-      document.getElementById('f_amount').focus();
-    }
-
     // 6 宮格分類大圖示點選
     function selectCategoryPill(cat, autoTax = true) {
       document.getElementById('f_category').value = cat;
@@ -914,39 +791,25 @@
       if (autoTax) autoDetectTaxCategory();
     }
 
-    // 6 格支付方式膠囊點選
+    // 依幣別分組之支付方式膠囊點選（日幣 / IC卡 / 台幣）
     function selectPaymentPill(method) {
       document.getElementById('f_payment').value = method;
       const isTwd = isTwdMethod(method);
+      const isIc = (method === 'IC卡' || method === 'IC卡儲值');
       document.querySelectorAll('.pay-pill').forEach(btn => {
         if (btn.dataset.pay === method) {
-          btn.className = isTwd
-            ? 'pay-pill border rounded-xl py-2 px-1 text-[11px] font-bold transition bg-amber-600 text-white border-amber-600 shadow-xs'
-            : 'pay-pill border rounded-xl py-2 px-1 text-[11px] font-bold transition bg-blue-600 text-white border-blue-600 shadow-xs';
+          if (isTwd) {
+            btn.className = 'pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition bg-amber-600 text-white border-amber-600 shadow-xs';
+          } else if (isIc) {
+            btn.className = 'pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition bg-sky-600 text-white border-sky-600 shadow-xs';
+          } else {
+            btn.className = 'pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition bg-blue-600 text-white border-blue-600 shadow-xs';
+          }
         } else {
-          btn.className = 'pay-pill border rounded-xl py-2 px-1 text-[11px] font-bold transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100';
+          btn.className = 'pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100';
         }
       });
       togglePaymentFields();
-    }
-
-    function renderRecentMerchants() {
-      const uniqueMerchants = [...new Set(appState.transactions.map(t => t.merchant).filter(Boolean))].slice(0, 6);
-      const box = document.getElementById('recentMerchantsBox');
-      const list = document.getElementById('recentMerchantsList');
-      if (uniqueMerchants.length === 0) {
-        box.classList.add('hidden');
-        return;
-      }
-      box.classList.remove('hidden');
-      list.innerHTML = uniqueMerchants.map(name => 
-        `<button type="button" onclick="selectRecentMerchant('${name.replace(/'/g, "\\'")}')" class="text-[11px] bg-slate-100 hover:bg-blue-100 text-slate-700 px-2.5 py-1 rounded-full border border-slate-200">${name}</button>`
-      ).join('');
-    }
-
-    function selectRecentMerchant(name) {
-      document.getElementById('f_merchant').value = name;
-      updateTaxPreview();
     }
 
     function autoDetectTaxCategory() {
@@ -967,7 +830,7 @@
       if (isTwdMethod(method)) return;
 
       const status = document.getElementById('f_tax_status').value;
-      const amt = getComputedAmountValue();
+      const amt = getAmountValue();
       const nonTax = Number(document.getElementById('f_non_taxable').value) || 0;
       const rate = Number(document.getElementById('f_refund_rate').value) || 0.085;
       const hintEl = document.getElementById('singleTaxHint');
@@ -988,24 +851,23 @@
     function openManualModal(enableGps = true) {
       document.getElementById('txForm').reset();
       document.getElementById('f_tx_id').value = '';
-      document.getElementById('modalTitle').textContent = '✍️ 3 秒快速記帳';
+      document.getElementById('modalTitle').textContent = '🧾 消費明細';
       document.getElementById('submitBtn').textContent = '✅ 確認儲存入帳';
       document.getElementById('modalDeleteBtn').classList.add('hidden');
-      document.getElementById('quickTemplatesBox').classList.remove('hidden');
       document.getElementById('previewBox').classList.add('hidden');
       document.getElementById('f_receipt_url').value = '';
       document.getElementById('f_ocr_note').value = '';
+      document.getElementById('f_location').value = '';
       document.getElementById('f_date').value = getTodayDateString();
       document.getElementById('f_refund_rate').value = String(appState.settings.refund_rate || 0.085);
 
-      selectCategoryPill('餐飲', true);
       selectPaymentPill('日幣現金');
-      renderRecentMerchants();
+      selectCategoryPill('餐飲', true);
 
       if (enableGps) {
         captureGps();
       } else {
-        document.getElementById('gpsBadge').textContent = '🖼️ 相簿匯入模式';
+        document.getElementById('gpsBadge').textContent = '🖼️ 相簿匯入';
       }
       updateTaxPreview();
       document.getElementById('txModal').classList.remove('hidden');
@@ -1020,25 +882,23 @@
       document.getElementById('modalTitle').textContent = '✏️ 修改消費明細';
       document.getElementById('submitBtn').textContent = '💾 儲存修改變更';
       document.getElementById('modalDeleteBtn').classList.remove('hidden');
-      document.getElementById('quickTemplatesBox').classList.add('hidden');
       document.getElementById('previewBox').classList.add('hidden');
       document.getElementById('gpsBadge').textContent = '✏️ 編輯模式';
 
       const isTwd = isTwdMethod(tx.payment_method);
-      document.getElementById('f_amount').value = isTwd ? tx.amount_twd : tx.amount_jpy;
-      document.getElementById('f_merchant').value = tx.merchant;
-      selectCategoryPill(tx.category || '餐飲', false);
+      document.getElementById('f_date').value = tx.date || getTodayDateString();
       selectPaymentPill(tx.payment_method || '日幣現金');
+      document.getElementById('f_amount').value = isTwd ? tx.amount_twd : tx.amount_jpy;
+      selectCategoryPill(tx.category || '餐飲', false);
+      document.getElementById('f_merchant').value = tx.merchant;
 
       document.getElementById('f_tax_status').value = tx.raw_tax_status || '不可退稅';
       document.getElementById('f_non_taxable').value = tx.non_taxable_jpy || 0;
       document.getElementById('f_refund_rate').value = String(tx.refund_rate || 0.085);
-      document.getElementById('f_date').value = tx.date || getTodayDateString();
       document.getElementById('f_location').value = tx.location_gps || '';
       document.getElementById('f_receipt_url').value = isValidHttpUrl(tx.receipt_url) ? tx.receipt_url : '';
       document.getElementById('f_ocr_note').value = tx.ocr_note || '';
 
-      renderRecentMerchants();
       handleAmountInput();
       document.getElementById('txModal').classList.remove('hidden');
     }
@@ -1062,13 +922,13 @@
 
       if (isTwdMethod(method)) {
         amountLabel.textContent = '台幣金額 (NT$)';
-        amountInput.placeholder = '輸入金額或算式，如 12500';
+        amountInput.placeholder = '請輸入台幣金額，例如 12500';
         amountInput.classList.remove('text-blue-600');
         amountInput.classList.add('text-amber-600');
         taxSection.classList.add('hidden');
       } else {
         amountLabel.textContent = '日幣金額 (¥)';
-        amountInput.placeholder = '輸入金額或算式，如 1200+450';
+        amountInput.placeholder = '請輸入日幣金額，例如 1580';
         amountInput.classList.remove('text-amber-600');
         amountInput.classList.add('text-blue-600');
         taxSection.classList.remove('hidden');
@@ -1081,7 +941,7 @@
     }
 
     function updateTwdEstimate() {
-      const amt = getComputedAmountValue();
+      const amt = getAmountValue();
       const method = document.getElementById('f_payment').value;
 
       if (isTwdMethod(method)) {
@@ -1100,7 +960,7 @@
       const txId = document.getElementById('f_tx_id').value;
       const method = document.getElementById('f_payment').value;
       const cat = document.getElementById('f_category').value;
-      const amt = getComputedAmountValue();
+      const amt = getAmountValue();
 
       if (amt <= 0) {
         alert('請輸入大於 0 的有效金額！');
