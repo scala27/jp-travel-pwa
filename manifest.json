@@ -1,17 +1,17 @@
 {
-  "name": "日本旅遊 AI 記帳本",
-  "short_name": "日本記帳",
-  "description": "單趟日本旅遊專屬 AI 收據辨識、雙幣錢包與退稅追蹤 PWA",
+  "name": "旅遊 AI 記帳本",
+  "short_name": "旅遊記帳",
+  "description": "單趟旅遊專屬 AI 收據辨識、雙幣錢包與退稅追蹤 PWA",
   "start_url": "./index.html",
   "display": "standalone",
-  "background_color": "#f8fafc",
+  "background_color": "#0f172a",
   "theme_color": "#0f172a",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/3135/3135706.png",
+      "src": "./icon.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
