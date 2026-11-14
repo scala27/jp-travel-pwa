@@ -1,8 +1,9 @@
-const CACHE_NAME = 'jp-travel-expense-v1';
+const CACHE_NAME = 'travel-expense-pwa-v2';
 const ASSETS = [
   './',
   './index.html',
-  './manifest.json'
+  './manifest.json',
+  './icon.svg'
 ];
 
 self.addEventListener('install', (event) => {
@@ -22,7 +23,6 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // API 請求直接走網路，靜態資源優先讀取快取並背景更新
   if (event.request.url.includes('script.google.com')) {
     return;
   }
