@@ -55,7 +55,6 @@
           <p id="totalTwd" class="text-3xl font-extrabold mt-1">NT$ 0</p>
           <p id="totalJpy" class="text-sm text-slate-300 mt-1">當地日幣累計：¥ 0</p>
         </div>
-        <!-- 點擊可開啟 2026 退稅新制同店同日合併追蹤清單 -->
         <button onclick="openTaxModal()" id="taxStatusCard" class="bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 text-rose-200 px-3 py-2 rounded-xl text-right shrink-0 transition">
           <p class="text-[10px] text-rose-300">🇯🇵 預計可退稅 ▸</p>
           <p id="pendingTaxJpy" class="text-sm font-extrabold text-white">¥ 0</p>
@@ -78,23 +77,28 @@
       </div>
     </section>
 
-    <!-- 等寬對稱雙操作鈕 -->
-    <section class="grid grid-cols-2 gap-3">
-      <label class="bg-blue-600 active:bg-blue-700 text-white rounded-2xl h-14 px-3 shadow-md flex items-center justify-center gap-2 cursor-pointer font-bold text-sm select-none whitespace-nowrap">
-        <span class="text-lg">📸</span>
-        <span>拍發票 / 收據 OCR</span>
-        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptCapture(event)" />
+    <!-- 三鍵並排操作列：直接拍照 OCR / 相簿匯入照片 OCR / 手動儲值 -->
+    <section class="grid grid-cols-3 gap-2">
+      <label class="bg-blue-600 active:bg-blue-700 text-white rounded-2xl h-14 px-2 shadow-md flex flex-col items-center justify-center cursor-pointer font-bold text-xs select-none whitespace-nowrap">
+        <span class="text-base leading-none mb-1">📸</span>
+        <span>拍照 OCR</span>
+        <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptCapture(event, 'camera')" />
       </label>
-      <button onclick="openManualModal()" class="bg-white active:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl h-14 px-3 shadow-sm flex items-center justify-center gap-2 font-bold text-sm select-none whitespace-nowrap">
-        <span class="text-lg">✍️</span>
+      <label class="bg-indigo-600 active:bg-indigo-700 text-white rounded-2xl h-14 px-2 shadow-md flex flex-col items-center justify-center cursor-pointer font-bold text-xs select-none whitespace-nowrap">
+        <span class="text-base leading-none mb-1">🖼️</span>
+        <span>相簿匯入</span>
+        <input type="file" id="galleryInput" accept="image/*" class="hidden" onchange="handleReceiptCapture(event, 'gallery')" />
+      </label>
+      <button onclick="openManualModal()" class="bg-white active:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl h-14 px-2 shadow-sm flex flex-col items-center justify-center font-bold text-xs select-none whitespace-nowrap">
+        <span class="text-base leading-none mb-1">✍️</span>
         <span>手動 / 儲值</span>
       </button>
     </section>
 
-    <!-- 即時消費流水帳 -->
+    <!-- 即時消費流水帳（依消費日期分組排序） -->
     <section>
       <div class="flex justify-between items-center mb-2.5">
-        <h2 class="text-sm font-bold text-slate-600">消費明細紀錄</h2>
+        <h2 class="text-sm font-bold text-slate-600">消費明細紀錄（依消費日期排序）</h2>
         <span id="txCount" class="text-xs text-slate-400">共 0 筆</span>
       </div>
       <div id="txList" class="space-y-2.5">
@@ -169,13 +173,13 @@
           </div>
         </div>
 
-        <!-- 本趟歷史店家快選列（確保同店同日名稱一致以合併計算滿 ¥5,500） -->
+        <!-- 本趟歷史店家快選列 -->
         <div id="recentMerchantsBox" class="hidden">
           <p class="text-[11px] text-slate-500 mb-1">⚡ 同店快選（點選可直接帶入一致店名合併退稅）：</p>
           <div id="recentMerchantsList" class="flex flex-wrap gap-1.5"></div>
         </div>
 
-        <!-- 2026/11/1 日本退稅新制計算區塊（台幣支付時自動隱藏） -->
+        <!-- 2026/11/1 日本退稅新制計算區塊 -->
         <div id="taxSection" class="bg-rose-50/70 border border-rose-200 rounded-xl p-3 space-y-2.5">
           <div class="flex justify-between items-center">
             <span class="text-xs font-bold text-rose-800">🇯🇵 2026 日本退稅新制設定</span>
@@ -321,6 +325,10 @@
       return method === '台幣現金' || method === '台幣信用卡';
     }
 
+    function isValidHttpUrl(url) {
+      return typeof url === 'string' && /^https?:\/\//i.test(url.trim());
+    }
+
     function getTodayDateString() {
       const now = new Date();
       const pad = (n) => String(n).padStart(2, '0');
@@ -373,7 +381,7 @@
     }
 
     function renderDashboard() {
-      const { settings, summary, transactions } = appState;
+      const { settings, summary } = appState;
       document.getElementById('tripTitle').textContent = settings.trip_name;
       document.getElementById('totalTwd').textContent = `NT$ ${summary.total_spent_twd.toLocaleString()}`;
       document.getElementById('totalJpy').textContent = `當地日幣累計：¥ ${summary.total_spent_jpy.toLocaleString()}`;
@@ -385,14 +393,49 @@
       document.getElementById('pendingTaxJpy').textContent = `¥ ${(summary.pending_refund_jpy || 0).toLocaleString()}`;
       document.getElementById('pendingTaxTwd').textContent = `約 NT$ ${(summary.pending_refund_twd || 0).toLocaleString()}`;
 
-      document.getElementById('txCount').textContent = `共 ${transactions.length} 筆`;
+      // 確保前端也嚴格依照「消費日期 (date)」由新到舊排序（同日集中排列）
+      const sortedTx = [...(appState.transactions || [])].sort((a, b) => {
+        const d = String(b.date || '').localeCompare(String(a.date || ''));
+        if (d !== 0) return d;
+        return String(b.tx_id || '').localeCompare(String(a.tx_id || ''));
+      });
+
+      document.getElementById('txCount').textContent = `共 ${sortedTx.length} 筆`;
       const listEl = document.getElementById('txList');
-      if (!transactions.length) {
+      if (!sortedTx.length) {
         listEl.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">尚無消費紀錄，點擊上方按鈕開始記帳</div>`;
         return;
       }
 
-      listEl.innerHTML = transactions.map(tx => {
+      // 依消費日期分組計算當日小計，方便檢視單日消費狀況
+      const dailyTotals = {};
+      sortedTx.forEach(tx => {
+        const dKey = tx.date || '未指定日期';
+        if (!dailyTotals[dKey]) dailyTotals[dKey] = { twd: 0, jpy: 0, count: 0 };
+        if (tx.payment_method !== 'IC卡儲值') {
+          dailyTotals[dKey].twd += (Number(tx.amount_twd) || 0);
+          dailyTotals[dKey].jpy += (Number(tx.amount_jpy) || 0);
+        }
+        dailyTotals[dKey].count += 1;
+      });
+
+      let currentDateHeader = '';
+      const htmlBlocks = [];
+
+      sortedTx.forEach(tx => {
+        const dKey = tx.date || '未指定日期';
+        if (dKey !== currentDateHeader) {
+          currentDateHeader = dKey;
+          const dayStat = dailyTotals[dKey];
+          const jpySub = dayStat.jpy > 0 ? `（¥${dayStat.jpy.toLocaleString()}）` : '';
+          htmlBlocks.push(`
+            <div class="flex justify-between items-center pt-2 pb-1 px-1">
+              <span class="text-xs font-extrabold text-slate-700">📅 ${dKey} <span class="font-normal text-slate-400">(${dayStat.count}筆)</span></span>
+              <span class="text-xs font-bold text-slate-600">當日小計 NT$ ${dayStat.twd.toLocaleString()}${jpySub}</span>
+            </div>
+          `);
+        }
+
         let taxTag = '';
         if (tx.computed_tax_status === '待機場退稅') {
           taxTag = `<button onclick="openTaxModal()" class="bg-rose-100 text-rose-700 text-[10px] px-1.5 py-0.5 rounded font-bold">✅ 達標可退 ¥${tx.est_refund_jpy}</button>`;
@@ -402,8 +445,9 @@
           taxTag = `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0.5 rounded font-bold">已機場退稅</span>`;
         }
 
-        const receiptBtn = tx.receipt_url 
-          ? `<a href="${tx.receipt_url}" target="_blank" class="text-blue-600 text-[11px] underline ml-1">憑證</a>` 
+        // 僅當確實具備有效 http/https 雲端圖片連結時才顯示「憑證」
+        const receiptBtn = isValidHttpUrl(tx.receipt_url)
+          ? `<a href="${tx.receipt_url.trim()}" target="_blank" class="text-blue-600 text-[11px] underline ml-1">憑證</a>`
           : '';
 
         const isTwdOnly = (tx.amount_jpy === 0 || isTwdMethod(tx.payment_method));
@@ -413,7 +457,7 @@
           : `<p class="font-extrabold text-base text-slate-900">¥ ${tx.amount_jpy.toLocaleString()}</p>
              <p class="text-xs text-slate-500">NT$ ${tx.amount_twd.toLocaleString()}</p>`;
 
-        return `
+        htmlBlocks.push(`
           <div class="bg-white p-3.5 rounded-2xl shadow-xs border border-slate-100 flex justify-between items-center gap-2">
             <div class="space-y-1 min-w-0 flex-1">
               <div class="flex items-center gap-1.5 flex-wrap">
@@ -421,7 +465,7 @@
                 <span class="font-bold text-sm text-slate-800 truncate">${tx.merchant}</span>
               </div>
               <div class="text-[11px] text-slate-400 flex items-center flex-wrap gap-1">
-                <span>${tx.date}</span> • <span>${tx.payment_method}</span>
+                <span>${tx.payment_method}</span>
                 ${receiptBtn}
               </div>
               <div class="flex items-center gap-1.5 pt-0.5 flex-wrap">
@@ -434,19 +478,26 @@
               ${amountHtml}
             </div>
           </div>
-        `;
-      }).join('');
+        `);
+      });
+
+      listEl.innerHTML = htmlBlocks.join('');
     }
 
     /**
-     * 拍攝台灣統一發票/收據 或 日本感熱紙收據，送交 Google Drive 原生 OCR 辨識
+     * 支援「直接拍照 OCR」與「相簿匯入照片 OCR」
      */
-    async function handleReceiptCapture(event) {
+    async function handleReceiptCapture(event, sourceType = 'camera') {
       const file = event.target.files[0];
       if (!file) return;
 
-      captureGps();
-      showLoading('壓縮憑證照片中...', '最佳化傳輸體積以加速上傳');
+      // 只有當下拍照才自動抓目前 GPS；若從相簿匯入歷史收據，則不覆蓋當下位置以免地點錯置
+      if (sourceType === 'camera') {
+        captureGps();
+      }
+
+      const sourceLabel = sourceType === 'gallery' ? '相簿照片' : '拍攝憑證';
+      showLoading(`壓縮${sourceLabel}中...`, '最佳化傳輸體積以加速辨識');
 
       let compressedBase64 = '';
       try {
@@ -454,7 +505,7 @@
 
         if (!navigator.onLine) {
           hideLoading();
-          openManualModal();
+          openManualModal(sourceType === 'camera');
           document.getElementById('receiptPreview').src = compressedBase64;
           document.getElementById('previewBox').classList.remove('hidden');
           alert('目前處於離線狀態，請先手動輸入金額！');
@@ -484,17 +535,16 @@
 
         if (json.status === 'success') {
           const { receipt_url, ocr_data } = json.data;
-          openManualModal();
+          openManualModal(sourceType === 'camera');
           const regionLabel = ocr_data.region === 'TW' ? '🇹🇼 台灣發票/收據' : '🇯🇵 日本收據';
           document.getElementById('modalTitle').textContent = `📄 OCR 辨識確認 (${regionLabel})`;
           document.getElementById('receiptPreview').src = compressedBase64;
           document.getElementById('previewBox').classList.remove('hidden');
 
-          document.getElementById('f_receipt_url').value = receipt_url || '';
+          document.getElementById('f_receipt_url').value = isValidHttpUrl(receipt_url) ? receipt_url : '';
           document.getElementById('f_merchant').value = ocr_data.merchant || '';
           document.getElementById('f_category').value = ocr_data.category || '餐飲';
 
-          // 依據辨識出的國別自動切換幣別與付款方式
           if (ocr_data.region === 'TW') {
             document.getElementById('f_payment').value = '台幣信用卡';
           } else {
@@ -509,7 +559,6 @@
             document.getElementById('f_date').value = ocr_data.date;
           }
 
-          // 設定退稅新制欄位
           if (ocr_data.region === 'JP' && ocr_data.tax_eligible) {
             document.getElementById('f_tax_status').value = '納入退稅累計';
             document.getElementById('f_non_taxable').value = ocr_data.non_taxable_jpy || 0;
@@ -522,7 +571,7 @@
           updateTaxPreview();
         } else {
           alert('OCR 辨識失敗，請改為手動輸入：\n' + json.message);
-          openManualModal();
+          openManualModal(sourceType === 'camera');
           document.getElementById('receiptPreview').src = compressedBase64;
           document.getElementById('previewBox').classList.remove('hidden');
         }
@@ -532,7 +581,7 @@
           ? '網路上傳逾時（超過 25 秒），已保留收據照片，請直接手動輸入金額！' 
           : '連線異常：' + err.message;
         alert(msg);
-        openManualModal();
+        openManualModal(sourceType === 'camera');
         if (compressedBase64) {
           document.getElementById('receiptPreview').src = compressedBase64;
           document.getElementById('previewBox').classList.remove('hidden');
@@ -622,7 +671,7 @@
       }
     }
 
-    function openManualModal() {
+    function openManualModal(enableGps = true) {
       document.getElementById('txForm').reset();
       document.getElementById('f_tx_id').value = '';
       document.getElementById('modalTitle').textContent = '✍️ 新增消費 / 儲值紀錄';
@@ -634,7 +683,11 @@
       document.getElementById('f_refund_rate').value = String(appState.settings.refund_rate || 0.085);
 
       renderRecentMerchants();
-      captureGps();
+      if (enableGps) {
+        captureGps();
+      } else {
+        document.getElementById('gpsBadge').textContent = '🖼️ 相簿匯入模式';
+      }
       togglePaymentFields();
       updateTaxPreview();
       document.getElementById('txModal').classList.remove('hidden');
@@ -649,6 +702,7 @@
       document.getElementById('modalTitle').textContent = '✏️ 修改消費明細紀錄';
       document.getElementById('submitBtn').textContent = '💾 儲存修改變更';
       document.getElementById('previewBox').classList.add('hidden');
+      document.getElementById('gpsBadge').textContent = '✏️ 編輯模式';
 
       document.getElementById('f_payment').value = tx.payment_method;
       const isTwd = isTwdMethod(tx.payment_method);
@@ -660,7 +714,7 @@
       document.getElementById('f_refund_rate').value = String(tx.refund_rate || 0.085);
       document.getElementById('f_date').value = tx.date || getTodayDateString();
       document.getElementById('f_location').value = tx.location_gps || '';
-      document.getElementById('f_receipt_url').value = tx.receipt_url || '';
+      document.getElementById('f_receipt_url').value = isValidHttpUrl(tx.receipt_url) ? tx.receipt_url : '';
       document.getElementById('f_ocr_note').value = tx.ocr_note || '';
 
       renderRecentMerchants();
@@ -720,6 +774,7 @@
       const method = document.getElementById('f_payment').value;
       const amt = Number(document.getElementById('f_amount').value) || 0;
       const isTwd = isTwdMethod(method);
+      const rawReceiptUrl = document.getElementById('f_receipt_url').value;
 
       const payload = {
         action: txId ? 'edit_tx' : 'save_tx',
@@ -734,7 +789,7 @@
         refund_rate: isTwd ? 0 : (Number(document.getElementById('f_refund_rate').value) || 0.085),
         date: document.getElementById('f_date').value,
         location_gps: document.getElementById('f_location').value,
-        receipt_url: document.getElementById('f_receipt_url').value,
+        receipt_url: isValidHttpUrl(rawReceiptUrl) ? rawReceiptUrl : '',
         ocr_note: document.getElementById('f_ocr_note').value
       };
 
@@ -799,9 +854,6 @@
       }
     }
 
-    /**
-     * 2026 日本退稅新制：同店同日合併追蹤視窗與一鍵機場核銷
-     */
     function openTaxModal() {
       const listEl = document.getElementById('taxGroupList');
       const groups = appState.tax_groups || [];
