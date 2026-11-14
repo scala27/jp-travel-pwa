@@ -17,31 +17,31 @@
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   </style>
 </head>
-<body class="bg-slate-100 text-slate-800 pb-24">
+<body class="bg-slate-100 text-slate-900 pb-24">
 
   <!-- 頂部導覽列 -->
-  <header class="bg-slate-900 text-white px-3.5 py-3 sticky top-0 z-30 shadow-md flex justify-between items-center gap-2">
-    <div class="flex items-center gap-2.5 min-w-0 flex-1">
-      <img src="./icon.svg" alt="icon" class="w-8 h-8 rounded-lg shrink-0 shadow-xs" />
+  <header class="bg-slate-900 text-white px-4 py-3.5 sticky top-0 z-30 shadow-md flex justify-between items-center gap-2">
+    <div class="flex items-center gap-3 min-w-0 flex-1">
+      <img src="./icon.svg" alt="icon" class="w-9 h-9 rounded-lg shrink-0 shadow-xs" />
       <div class="min-w-0 flex-1">
         <h1 id="tripTitle" class="text-base font-bold tracking-wide truncate">旅遊記帳</h1>
-        <p id="syncStatus" class="text-[11px] text-slate-400 truncate">連線狀態檢查中</p>
+        <p id="syncStatus" class="text-xs text-slate-400 truncate">連線狀態檢查中</p>
       </div>
     </div>
-    <div class="flex items-center gap-1.5 shrink-0">
-      <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg text-xs font-medium border border-slate-700 whitespace-nowrap">
+    <div class="flex items-center gap-2 shrink-0">
+      <button onclick="openSettingsModal()" class="bg-slate-800 hover:bg-slate-700 px-3 py-2 rounded-xl text-xs font-semibold border border-slate-700 whitespace-nowrap">
         ⚙️ 設定
       </button>
-      <button onclick="fetchDashboard()" class="bg-blue-600 hover:bg-blue-500 px-2.5 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap">
+      <button onclick="fetchDashboard()" class="bg-blue-600 hover:bg-blue-500 px-3 py-2 rounded-xl text-xs font-semibold whitespace-nowrap">
         🔄 同步
       </button>
     </div>
   </header>
 
   <!-- 離線待上傳提示列 -->
-  <div id="offlineBanner" class="hidden bg-amber-500 text-white px-4 py-2 text-xs font-medium flex justify-between items-center">
+  <div id="offlineBanner" class="hidden bg-amber-500 text-white px-4 py-2.5 text-xs font-semibold flex justify-between items-center">
     <span id="offlineCountText">尚有 0 筆離線紀錄待同步</span>
-    <button onclick="syncOfflineQueue()" class="bg-white text-amber-700 px-2.5 py-1 rounded font-bold whitespace-nowrap">立即上傳</button>
+    <button onclick="syncOfflineQueue()" class="bg-white text-amber-800 px-3 py-1 rounded-lg font-bold whitespace-nowrap">立即上傳</button>
   </div>
 
   <!-- 核心數據儀表板 -->
@@ -51,84 +51,84 @@
     <section class="bg-gradient-to-br from-slate-800 to-slate-900 text-white rounded-2xl p-5 shadow-lg">
       <div class="flex justify-between items-start gap-2">
         <div>
-          <p class="text-xs text-slate-400">本趟實質總花費（含機酒台幣＋當地日幣）</p>
+          <p class="text-xs text-slate-400 font-medium">本趟實質總花費（含機酒台幣＋當地日幣）</p>
           <p id="totalTwd" class="text-3xl font-extrabold mt-1">NT$ 0</p>
-          <p id="totalJpy" class="text-sm text-slate-300 mt-1">當地日幣累計：¥ 0</p>
+          <p id="totalJpy" class="text-sm text-slate-300 mt-1 font-medium">當地日幣累計：¥ 0</p>
         </div>
-        <button onclick="openTaxModal()" id="taxStatusCard" class="bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 text-rose-200 px-3 py-2 rounded-xl text-right shrink-0 transition">
-          <p class="text-[10px] text-rose-300">🇯🇵 預計可退稅 ▸</p>
-          <p id="pendingTaxJpy" class="text-sm font-extrabold text-white">¥ 0</p>
-          <p id="pendingTaxTwd" class="text-[10px] text-rose-200">約 NT$ 0</p>
+        <button onclick="openTaxModal()" id="taxStatusCard" class="bg-rose-500/20 hover:bg-rose-500/30 border border-rose-400/40 text-rose-200 px-3.5 py-2.5 rounded-2xl text-right shrink-0 transition">
+          <p class="text-[11px] text-rose-300 font-bold">🇯🇵 預計可退稅 ▸</p>
+          <p id="pendingTaxJpy" class="text-base font-extrabold text-white mt-0.5">¥ 0</p>
+          <p id="pendingTaxTwd" class="text-[11px] text-rose-200">約 NT$ 0</p>
         </button>
       </div>
 
       <!-- 視覺化支出佔比彩色比例條 -->
-      <div id="categoryRatioBox" class="hidden mt-4 pt-3.5 border-t border-slate-700/80 space-y-2">
-        <div id="categoryRatioBar" class="w-full h-2.5 bg-slate-700/80 rounded-full overflow-hidden flex gap-0.5"></div>
-        <div id="categoryRatioLegend" class="flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-slate-300"></div>
+      <div id="categoryRatioBox" class="hidden mt-4 pt-4 border-t border-slate-700/80 space-y-2">
+        <div id="categoryRatioBar" class="w-full h-3 bg-slate-700/80 rounded-full overflow-hidden flex gap-0.5"></div>
+        <div id="categoryRatioLegend" class="flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-300 font-medium"></div>
       </div>
 
       <!-- 雙錢包即時水位 -->
-      <div class="grid grid-cols-2 gap-3 mt-4 pt-3.5 border-t border-slate-700/80">
-        <div class="bg-slate-800/80 p-3 rounded-xl">
-          <p class="text-xs text-slate-400">💴 日幣現金餘額</p>
-          <p id="cashBalance" class="text-lg font-bold text-emerald-400 mt-0.5">¥ 0</p>
-          <p id="cashRateHint" class="text-[11px] text-slate-400">均價 0.215</p>
+      <div class="grid grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-700/80">
+        <div class="bg-slate-800/80 p-3.5 rounded-xl">
+          <p class="text-xs text-slate-400 font-medium">💴 日幣現金餘額</p>
+          <p id="cashBalance" class="text-xl font-bold text-emerald-400 mt-1">¥ 0</p>
+          <p id="cashRateHint" class="text-xs text-slate-400 mt-0.5">均價 0.215</p>
         </div>
-        <div class="bg-slate-800/80 p-3 rounded-xl">
-          <p class="text-xs text-slate-400">🚃 交通 IC 卡餘額</p>
-          <p id="icBalance" class="text-lg font-bold text-sky-400 mt-0.5">¥ 0</p>
-          <p id="icRateHint" class="text-[11px] text-slate-400">Suica / ICOCA</p>
+        <div class="bg-slate-800/80 p-3.5 rounded-xl">
+          <p class="text-xs text-slate-400 font-medium">🚃 交通 IC 卡餘額</p>
+          <p id="icBalance" class="text-xl font-bold text-sky-400 mt-1">¥ 0</p>
+          <p id="icRateHint" class="text-xs text-slate-400 mt-0.5">Suica / ICOCA</p>
         </div>
       </div>
     </section>
 
-    <!-- 三鍵並排操作列：直接拍照 OCR / 相簿匯入照片 OCR / 手動儲值 -->
-    <section class="grid grid-cols-3 gap-2">
-      <label class="bg-blue-600 active:bg-blue-700 text-white rounded-2xl h-14 px-2 shadow-md flex flex-col items-center justify-center cursor-pointer font-bold text-xs select-none whitespace-nowrap">
-        <span class="text-base leading-none mb-1">📸</span>
+    <!-- 三鍵並排操作列 -->
+    <section class="grid grid-cols-3 gap-2.5">
+      <label class="bg-blue-600 active:bg-blue-700 text-white rounded-2xl h-16 px-2 shadow-md flex flex-col items-center justify-center cursor-pointer font-bold text-xs select-none whitespace-nowrap">
+        <span class="text-lg leading-none mb-1">📸</span>
         <span>拍照 OCR</span>
         <input type="file" id="cameraInput" accept="image/*" capture="environment" class="hidden" onchange="handleReceiptCapture(event, 'camera')" />
       </label>
-      <label class="bg-indigo-600 active:bg-indigo-700 text-white rounded-2xl h-14 px-2 shadow-md flex flex-col items-center justify-center cursor-pointer font-bold text-xs select-none whitespace-nowrap">
-        <span class="text-base leading-none mb-1">🖼️</span>
+      <label class="bg-indigo-600 active:bg-indigo-700 text-white rounded-2xl h-16 px-2 shadow-md flex flex-col items-center justify-center cursor-pointer font-bold text-xs select-none whitespace-nowrap">
+        <span class="text-lg leading-none mb-1">🖼️</span>
         <span>相簿匯入</span>
         <input type="file" id="galleryInput" accept="image/*" class="hidden" onchange="handleReceiptCapture(event, 'gallery')" />
       </label>
-      <button onclick="openManualModal()" class="bg-white active:bg-slate-50 text-slate-800 border border-slate-200 rounded-2xl h-14 px-2 shadow-sm flex flex-col items-center justify-center font-bold text-xs select-none whitespace-nowrap">
-        <span class="text-base leading-none mb-1">✍️</span>
+      <button onclick="openManualModal()" class="bg-white active:bg-slate-50 text-slate-900 border border-slate-200 rounded-2xl h-16 px-2 shadow-sm flex flex-col items-center justify-center font-bold text-xs select-none whitespace-nowrap">
+        <span class="text-lg leading-none mb-1">✍️</span>
         <span>手動 / 儲值</span>
       </button>
     </section>
 
-    <!-- 即時消費流水帳（可收合每日時間軸＋極簡卡片） -->
+    <!-- 即時消費流水帳 -->
     <section>
-      <div class="flex justify-between items-center mb-2">
-        <h2 class="text-sm font-bold text-slate-600">消費明細 <span class="text-[11px] font-normal text-slate-400">（點卡片編輯・左滑刪除）</span></h2>
-        <span id="txCount" class="text-xs text-slate-400">共 0 筆</span>
+      <div class="flex justify-between items-center mb-2 px-1">
+        <h2 class="text-sm font-bold text-slate-700">消費明細 <span class="text-xs font-normal text-slate-400">（點卡片編輯・左滑刪除）</span></h2>
+        <span id="txCount" class="text-xs font-medium text-slate-500">共 0 筆</span>
       </div>
-      <div id="txList" class="space-y-2">
-        <div class="text-center py-8 text-slate-400 text-sm">尚無消費紀錄，點擊上方按鈕開始記帳</div>
+      <div id="txList" class="space-y-2.5">
+        <div class="text-center py-10 text-slate-400 text-sm">尚無消費紀錄，點擊上方按鈕開始記帳</div>
       </div>
     </section>
   </main>
 
   <!-- Loading 遮罩 -->
-  <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 flex flex-col items-center justify-center text-white px-6 text-center">
+  <div id="loadingOverlay" class="hidden fixed inset-0 bg-slate-900/70 backdrop-blur-xs z-50 flex flex-col items-center justify-center text-white px-6 text-center">
     <div class="loader mb-3"></div>
-    <p id="loadingText" class="text-sm font-medium">Google Drive OCR 辨識中...</p>
+    <p id="loadingText" class="text-base font-semibold">Google Drive OCR 辨識中...</p>
     <p id="loadingSubText" class="text-xs text-slate-300 mt-1"></p>
   </div>
 
-  <!-- 消費明細輸入 / 編輯 Modal（中日雙語對照＋直覺線性動線） -->
+  <!-- 消費明細輸入 / 編輯 Modal -->
   <div id="txModal" class="hidden fixed inset-0 bg-slate-900/60 z-40 flex items-end sm:items-center justify-center">
-    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 max-h-[92vh] overflow-y-auto shadow-2xl">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-6 max-h-[92vh] overflow-y-auto shadow-2xl space-y-4">
       <div class="flex justify-between items-center pb-3 border-b">
-        <h3 id="modalTitle" class="text-base font-bold">🧾 消費明細</h3>
-        <button onclick="closeTxModal()" class="text-slate-400 text-xl font-bold px-2">✕</button>
+        <h3 id="modalTitle" class="text-base font-bold text-slate-900">🧾 消費明細</h3>
+        <button onclick="closeTxModal()" class="text-slate-400 text-xl font-bold p-1">✕</button>
       </div>
 
-      <form id="txForm" onsubmit="submitTransaction(event)" class="space-y-4 mt-4">
+      <form id="txForm" onsubmit="submitTransaction(event)" class="space-y-4">
         <input type="hidden" id="f_tx_id" />
         <input type="hidden" id="f_receipt_url" />
         <input type="hidden" id="f_ocr_note" />
@@ -139,75 +139,68 @@
         <input type="hidden" id="f_qr_registered" value="false" />
         <input type="hidden" id="f_luggage_type" value="託運" />
 
-        <!-- 收據/發票縮圖預覽（僅 OCR 模式顯示） -->
-        <div id="previewBox" class="hidden bg-slate-100 p-2 rounded-xl text-center">
-          <img id="receiptPreview" class="max-h-36 mx-auto rounded-lg object-contain" />
+        <div id="previewBox" class="hidden bg-slate-100 p-2.5 rounded-2xl text-center">
+          <img id="receiptPreview" class="max-h-40 mx-auto rounded-xl object-contain" />
         </div>
 
-        <!-- 步驟 1：消費日期 -->
         <div>
-          <div class="flex justify-between items-center mb-1">
-            <label for="f_date" class="text-xs font-bold text-slate-600">消費日期</label>
-            <span id="gpsBadge" class="text-[11px] text-slate-400">📍 定位中</span>
+          <div class="flex justify-between items-center mb-1.5">
+            <label for="f_date" class="text-xs font-bold text-slate-700">消費日期</label>
+            <span id="gpsBadge" class="text-xs text-slate-500 font-medium">📍 定位中</span>
           </div>
-          <input type="date" id="f_date" required class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-medium text-slate-800 bg-slate-50" />
+          <input type="date" id="f_date" required class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-slate-900 bg-slate-50" />
         </div>
 
-        <!-- 步驟 2：支付方式（中日雙語對照，依日幣／IC卡／台幣分列） -->
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5">支付方式 <span class="font-normal text-slate-400">（含日文收據對照）</span></label>
-          <div id="paymentGrid" class="grid grid-cols-2 gap-1.5">
-            <button type="button" data-pay="日幣現金" onclick="selectPaymentPill('日幣現金')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">💴 日幣現金 <span class="text-[10px] opacity-75 font-normal">現金</span></button>
-            <button type="button" data-pay="日幣信用卡" onclick="selectPaymentPill('日幣信用卡')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">💳 日幣刷卡 <span class="text-[10px] opacity-75 font-normal">クレジット</span></button>
-            <button type="button" data-pay="IC卡" onclick="selectPaymentPill('IC卡')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">🚃 IC卡扣款 <span class="text-[10px] opacity-75 font-normal">交通系IC</span></button>
-            <button type="button" data-pay="IC卡儲值" onclick="selectPaymentPill('IC卡儲值')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">➕ IC卡儲值 <span class="text-[10px] opacity-75 font-normal">チャージ</span></button>
-            <button type="button" data-pay="台幣現金" onclick="selectPaymentPill('台幣現金')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">💵 台幣現金 <span class="text-[10px] opacity-75 font-normal">台湾ドル</span></button>
-            <button type="button" data-pay="台幣信用卡" onclick="selectPaymentPill('台幣信用卡')" class="pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition">🇹🇼 台幣刷卡 <span class="text-[10px] opacity-75 font-normal">台湾カード</span></button>
+          <label class="block text-xs font-bold text-slate-700 mb-2">支付方式 <span class="font-normal text-slate-400">(日文對照)</span></label>
+          <div id="paymentGrid" class="grid grid-cols-2 gap-2">
+            <button type="button" data-pay="日幣現金" onclick="selectPaymentPill('日幣現金')" class="pay-pill border rounded-xl py-2.5 px-3 text-xs font-bold transition flex flex-col items-center"><span>💴 日幣現金</span><span class="text-[10px] opacity-75 font-normal mt-0.5">現金</span></button>
+            <button type="button" data-pay="日幣信用卡" onclick="selectPaymentPill('日幣信用卡')" class="pay-pill border rounded-xl py-2.5 px-3 text-xs font-bold transition flex flex-col items-center"><span>💳 日幣刷卡</span><span class="text-[10px] opacity-75 font-normal mt-0.5">クレジット</span></button>
+            <button type="button" data-pay="IC卡" onclick="selectPaymentPill('IC卡')" class="pay-pill border rounded-xl py-2.5 px-3 text-xs font-bold transition flex flex-col items-center"><span>🚃 IC卡扣款</span><span class="text-[10px] opacity-75 font-normal mt-0.5">交通系IC</span></button>
+            <button type="button" data-pay="IC卡儲值" onclick="selectPaymentPill('IC卡儲值')" class="pay-pill border rounded-xl py-2.5 px-3 text-xs font-bold transition flex flex-col items-center"><span>➕ IC卡儲值</span><span class="text-[10px] opacity-75 font-normal mt-0.5">チャージ</span></button>
+            <button type="button" data-pay="台幣現金" onclick="selectPaymentPill('台幣現金')" class="pay-pill border rounded-xl py-2.5 px-3 text-xs font-bold transition flex flex-col items-center"><span>💵 台幣現金</span><span class="text-[10px] opacity-75 font-normal mt-0.5">台湾ドル</span></button>
+            <button type="button" data-pay="台幣信用卡" onclick="selectPaymentPill('台幣信用卡')" class="pay-pill border rounded-xl py-2.5 px-3 text-xs font-bold transition flex flex-col items-center"><span>🇹🇼 台幣刷卡</span><span class="text-[10px] opacity-75 font-normal mt-0.5">台湾カード</span></button>
           </div>
         </div>
 
-        <!-- 步驟 3：金額 -->
-        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-1.5">
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2">
           <div class="flex justify-between items-center">
-            <label id="amountLabel" for="f_amount" class="text-xs font-bold text-slate-600">日幣金額 (¥)</label>
-            <span class="text-xs text-blue-700 font-medium">約 <strong id="twdEstimateText" class="text-sm">NT$ 0</strong></span>
+            <label id="amountLabel" for="f_amount" class="text-xs font-bold text-slate-700">日幣金額 (¥)</label>
+            <span class="text-xs text-blue-700 font-semibold">約 <strong id="twdEstimateText" class="text-sm">NT$ 0</strong></span>
           </div>
-          <input type="number" inputmode="numeric" id="f_amount" required min="1" step="1" oninput="handleAmountInput()" class="w-full bg-white border border-slate-300 rounded-xl px-3 py-2.5 text-xl font-extrabold text-blue-600 tracking-wide" placeholder="請輸入金額，例如 1580" />
+          <input type="number" inputmode="numeric" id="f_amount" required min="1" step="1" oninput="handleAmountInput()" class="w-full bg-white border border-slate-300 rounded-xl px-3.5 py-3 text-2xl font-extrabold text-blue-600 tracking-wide" placeholder="例如 1580" />
         </div>
 
-        <!-- 步驟 4：消費分類（中日雙語對照 6 宮格） -->
         <div>
-          <label class="block text-xs font-bold text-slate-600 mb-1.5">消費分類</label>
-          <div id="categoryGrid" class="grid grid-cols-3 gap-1.5">
-            <button type="button" data-cat="餐飲" onclick="selectCategoryPill('餐飲')" class="cat-pill border rounded-xl py-2 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>🍜 餐飲</span><span class="text-[9px] opacity-70 font-normal">食事</span></button>
-            <button type="button" data-cat="交通" onclick="selectCategoryPill('交通')" class="cat-pill border rounded-xl py-2 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>🚝 交通</span><span class="text-[9px] opacity-70 font-normal">交通・電車</span></button>
-            <button type="button" data-cat="藥妝購物" onclick="selectCategoryPill('藥妝購物')" class="cat-pill border rounded-xl py-2 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>🛍️ 藥妝購物</span><span class="text-[9px] opacity-70 font-normal">薬妝・買物</span></button>
-            <button type="button" data-cat="伴手禮" onclick="selectCategoryPill('伴手禮')" class="cat-pill border rounded-xl py-2 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>🎁 伴手禮</span><span class="text-[9px] opacity-70 font-normal">お土産</span></button>
-            <button type="button" data-cat="服飾電器" onclick="selectCategoryPill('服飾電器')" class="cat-pill border rounded-xl py-2 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>👕 服飾電器</span><span class="text-[9px] opacity-70 font-normal">衣類・家電</span></button>
-            <button type="button" data-cat="門票住宿" onclick="selectCategoryPill('門票住宿')" class="cat-pill border rounded-xl py-2 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>🏨 門票住宿</span><span class="text-[9px] opacity-70 font-normal">観光・宿泊</span></button>
+          <label class="block text-xs font-bold text-slate-700 mb-2">消費分類</label>
+          <div id="categoryGrid" class="grid grid-cols-3 gap-2">
+            <button type="button" data-cat="餐飲" onclick="selectCategoryPill('餐飲')" class="cat-pill border rounded-xl py-2.5 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>🍜 餐飲</span><span class="text-[10px] opacity-70 font-normal mt-0.5">食事</span></button>
+            <button type="button" data-cat="交通" onclick="selectCategoryPill('交通')" class="cat-pill border rounded-xl py-2.5 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>🚝 交通</span><span class="text-[10px] opacity-70 font-normal mt-0.5">交通・電車</span></button>
+            <button type="button" data-cat="藥妝購物" onclick="selectCategoryPill('藥妝購物')" class="cat-pill border rounded-xl py-2.5 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>🛍️ 藥妝購物</span><span class="text-[10px] opacity-70 font-normal mt-0.5">薬妝・買物</span></button>
+            <button type="button" data-cat="伴手禮" onclick="selectCategoryPill('伴手禮')" class="cat-pill border rounded-xl py-2.5 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>🎁 伴手禮</span><span class="text-[10px] opacity-70 font-normal mt-0.5">お土産</span></button>
+            <button type="button" data-cat="服飾電器" onclick="selectCategoryPill('服飾電器')" class="cat-pill border rounded-xl py-2.5 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>👕 服飾電器</span><span class="text-[10px] opacity-70 font-normal mt-0.5">衣類・家電</span></button>
+            <button type="button" data-cat="門票住宿" onclick="selectCategoryPill('門票住宿')" class="cat-pill border rounded-xl py-2.5 px-1 text-xs font-bold flex flex-col items-center justify-center transition"><span>🏨 門票住宿</span><span class="text-[10px] opacity-70 font-normal mt-0.5">観光・宿泊</span></button>
           </div>
         </div>
 
-        <!-- 步驟 5：店家 / 項目名稱（選填，留白自動帶入分類名稱；自動匹配已建檔店家規則） -->
         <div>
-          <div class="flex justify-between items-center mb-1">
-            <label for="f_merchant" class="text-xs font-bold text-slate-600">店家 / 項目名稱 <span class="font-normal text-slate-400">（選填，留白自動帶入分類）</span></label>
-            <span id="matchedRuleBadge" class="hidden text-[11px] font-bold text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-full">✨ 已套用本店退稅規則</span>
+          <div class="flex justify-between items-center mb-1.5">
+            <label for="f_merchant" class="text-xs font-bold text-slate-700">店家 / 項目名稱 <span class="font-normal text-slate-400">(選填)</span></label>
+            <span id="matchedRuleBadge" class="hidden text-xs font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">✨ 已套用本店規則</span>
           </div>
-          <input type="text" id="f_merchant" oninput="handleMerchantInput()" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm" placeholder="不輸入也可直接儲存（同店退稅請填一致店名）" />
+          <input type="text" id="f_merchant" oninput="handleMerchantInput()" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm" placeholder="留白則自動帶入分類名稱" />
         </div>
 
-        <!-- 步驟 6：2027 日本退稅新制單店規則設定（僅日幣支付顯示） -->
-        <div id="taxSection" class="bg-rose-50/70 border border-rose-200 rounded-xl p-3 space-y-2.5">
+        <div id="taxSection" class="bg-rose-50/80 border border-rose-200 rounded-2xl p-4 space-y-3">
           <div class="flex justify-between items-center">
-            <span class="text-xs font-bold text-rose-800">🇯🇵 日本退稅新制設定 <span class="font-normal text-[10px]">(免税手続き)</span></span>
-            <span id="singleTaxHint" class="text-[11px] font-bold text-rose-600">不可退稅項目</span>
+            <span class="text-xs font-bold text-rose-900">🇯🇵 日本退稅新制設定 <span class="font-normal text-xs">(免税)</span></span>
+            <span id="singleTaxHint" class="text-xs font-bold text-rose-700">不可退稅項目</span>
           </div>
 
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">退稅狀態</label>
-              <select id="f_tax_status" onchange="handleTaxStatusChange()" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white font-medium">
+              <label class="block text-xs font-bold text-slate-700 mb-1">退稅狀態</label>
+              <select id="f_tax_status" onchange="handleTaxStatusChange()" class="w-full border rounded-xl px-2.5 py-2 text-xs bg-white font-semibold">
                 <option value="不可退稅">不可退稅 (餐飲/交通)</option>
                 <option value="待機場海關確認">⏳ 待機場海關確認</option>
                 <option value="海關已過關(待入帳)">🛂 海關已過關(待入帳)</option>
@@ -215,39 +208,38 @@
               </select>
             </div>
             <div>
-              <label class="block text-[11px] font-bold text-slate-600 mb-1">本店手續費規則</label>
-              <select id="f_fee_type" onchange="handleFeeTypeChange()" class="w-full border rounded-lg px-2 py-1.5 text-xs bg-white">
+              <label class="block text-xs font-bold text-slate-700 mb-1">本店手續費規則</label>
+              <select id="f_fee_type" onchange="handleFeeTypeChange()" class="w-full border rounded-xl px-2 py-2 text-xs bg-white font-medium">
                 <option value="free">免手續費 (手数料無料)</option>
-                <option value="rate">比例抽成 (預設1.55%)</option>
-                <option value="fixed">單筆固定扣 (預設¥330)</option>
+                <option value="rate">比例抽成 (1.55%)</option>
+                <option value="fixed">單筆固定 (¥330)</option>
                 <option value="food8">8% 食品飲料免手續費</option>
               </select>
             </div>
           </div>
 
-          <div id="taxDetailFields" class="hidden space-y-2 pt-1 border-t border-rose-200/70">
-            <div class="grid grid-cols-2 gap-2">
+          <div id="taxDetailFields" class="hidden space-y-2 pt-2 border-t border-rose-200/80">
+            <div class="grid grid-cols-2 gap-2.5">
               <div id="feeValueBox" class="hidden">
-                <label id="feeValueLabel" class="block text-[11px] font-bold text-slate-600 mb-1">手續費比例 (%)</label>
-                <input type="number" step="0.05" id="f_fee_value" oninput="updateTaxPreview()" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white" value="1.55" min="0" />
+                <label id="feeValueLabel" class="block text-xs font-bold text-slate-700 mb-1">手續費比例 (%)</label>
+                <input type="number" step="0.05" id="f_fee_value" oninput="updateTaxPreview()" class="w-full border rounded-xl px-3 py-2 text-xs bg-white font-semibold" value="1.55" min="0" />
               </div>
               <div class="flex-1">
-                <label class="block text-[11px] font-bold text-slate-600 mb-1">扣除不可退稅項目 (¥)</label>
-                <input type="number" id="f_non_taxable" oninput="updateTaxPreview()" class="w-full border rounded-lg px-2.5 py-1.5 text-xs bg-white" value="0" min="0" placeholder="塑膠袋(レジ袋)/境內飲料" />
+                <label class="block text-xs font-bold text-slate-700 mb-1">扣除不可退稅 (¥)</label>
+                <input type="number" id="f_non_taxable" oninput="updateTaxPreview()" class="w-full border rounded-xl px-3 py-2 text-xs bg-white font-semibold" value="0" min="0" placeholder="塑膠袋等" />
               </div>
             </div>
-            <p class="text-[11px] text-rose-700 bg-white/80 px-2.5 py-1.5 rounded-lg border border-rose-100">
-              ⚠️ 整張收據商品皆須未消耗帶出境，境內自用請分開結帳。
+            <p class="text-xs text-rose-800 bg-white/90 px-3 py-2 rounded-xl border border-rose-100 font-medium">
+              ⚠️ 商品須未消耗帶出境，境內自用請分開結帳。
             </p>
           </div>
         </div>
 
-        <!-- 步驟 7：儲存／刪除操作列 -->
-        <div class="flex gap-2 pt-1">
-          <button type="button" id="modalDeleteBtn" onclick="deleteFromEditModal()" class="hidden bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold py-3 px-4 rounded-xl text-sm shrink-0">
+        <div class="flex gap-2.5 pt-2">
+          <button type="button" id="modalDeleteBtn" onclick="deleteFromEditModal()" class="hidden bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold py-3.5 px-4 rounded-xl text-sm shrink-0">
             🗑️ 刪除
           </button>
-          <button type="submit" id="submitBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-xl shadow-md">
+          <button type="submit" id="submitBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3.5 rounded-xl shadow-md text-sm">
             ✅ 確認儲存入帳
           </button>
         </div>
@@ -255,68 +247,68 @@
     </div>
   </div>
 
-  <!-- 2027 日本退稅新制 Modal：進店先拍退稅公告 OCR ＋ 中日指指通 ＋ 結帳前試算 ＋ 同店同日追蹤 -->
-  <div id="taxModal" class="hidden fixed inset-0 bg-slate-900/60 z-40 flex items-end sm:items-center justify-center">
-    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-5 max-h-[90vh] overflow-y-auto shadow-2xl space-y-4">
-      <div class="flex justify-between items-center border-b pb-2.5">
+  <!-- 2027 日本退稅新制 Modal (大字體加強版) -->
+  <div id="taxModal" class="hidden fixed inset-0 bg-slate-900/70 z-40 flex items-end sm:items-center justify-center">
+    <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-6 max-h-[92vh] overflow-y-auto shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
         <div>
           <h3 class="text-base font-bold text-slate-900">🇯🇵 日本退稅新制｜進店判讀與追蹤</h3>
-          <p class="text-[11px] text-slate-500">先付含稅價，同店同日有效消費滿 ¥5,500 出境過海關後退款</p>
+          <p class="text-xs text-slate-500 mt-0.5">同店同日有效消費滿 ¥5,500 出境過海關後退款</p>
         </div>
-        <button onclick="closeTaxModal()" class="text-slate-400 text-xl font-bold px-2">✕</button>
+        <button onclick="closeTaxModal()" class="text-slate-400 text-xl font-bold p-1">✕</button>
       </div>
 
-      <!-- 區塊 A：進店先拍退稅公告 OCR（拍照 / 相簿雙入口） -->
-      <div class="bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-2xl p-3.5 shadow-sm space-y-2.5">
+      <!-- 拍照 OCR 區塊 -->
+      <div class="bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-2xl p-4 shadow-sm space-y-3">
         <div>
-          <p class="text-xs font-extrabold">📷 進店先拍退稅公告（OCR 判讀規則）</p>
-          <p class="text-[11px] text-rose-100 mt-0.5">拍下店內免稅立牌，自動翻譯並抓取手續費率、QR登記與退款方式</p>
+          <p class="text-sm font-extrabold">📷 進店先拍退稅公告（OCR 判讀規則）</p>
+          <p class="text-xs text-rose-100 mt-0.5">拍攝店內立牌，自動抓取手續費率與退款方式</p>
         </div>
-        <div class="grid grid-cols-2 gap-2">
-          <label class="bg-white text-rose-700 active:bg-rose-50 rounded-xl py-2 px-3 text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs">
-            <span>📸</span>
+        <div class="grid grid-cols-2 gap-2.5">
+          <label class="bg-white text-rose-700 active:bg-rose-50 rounded-xl py-3 px-3 text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs">
+            <span class="text-base">📸</span>
             <span>拍公告立牌</span>
             <input type="file" accept="image/*" capture="environment" class="hidden" onchange="handleTaxNoticeCapture(event)" />
           </label>
-          <label class="bg-rose-800/60 hover:bg-rose-800 text-white border border-rose-300/40 rounded-xl py-2 px-3 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
-            <span>🖼️</span>
+          <label class="bg-rose-800/80 hover:bg-rose-800 text-white border border-rose-300/40 rounded-xl py-3 px-3 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer">
+            <span class="text-base">🖼️</span>
             <span>相簿選公告</span>
             <input type="file" accept="image/*" class="hidden" onchange="handleTaxNoticeCapture(event)" />
           </label>
         </div>
 
-        <!-- OCR 判讀結果確認儲存卡 -->
-        <div id="noticeResultBox" class="hidden bg-white text-slate-800 rounded-xl p-3 space-y-2.5 shadow-md">
-          <div class="flex justify-between items-center border-b pb-1.5">
-            <span class="text-xs font-extrabold text-rose-700">✨ 公告判讀結果（中日對照）</span>
-            <button type="button" onclick="document.getElementById('noticeResultBox').classList.add('hidden')" class="text-slate-400 text-xs">收起</button>
+        <!-- OCR 判讀結果確認卡 (加大字體) -->
+        <div id="noticeResultBox" class="hidden bg-white text-slate-900 rounded-2xl p-4 space-y-3 shadow-lg">
+          <div class="flex justify-between items-center border-b pb-2">
+            <span class="text-xs font-extrabold text-rose-700">✨ 判讀結果（請檢查並直接修改錯字）</span>
+            <button type="button" onclick="document.getElementById('noticeResultBox').classList.add('hidden')" class="text-slate-400 text-xs font-bold">收起</button>
           </div>
-          <div class="grid grid-cols-2 gap-2">
+          <div class="grid grid-cols-2 gap-2.5">
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">店家名稱</label>
-              <input type="text" id="nr_merchant" class="w-full border rounded-lg px-2 py-1 text-xs font-bold" placeholder="輸入店名" />
+              <label class="block text-xs font-bold text-slate-600 mb-1">店家名稱 (可修改)</label>
+              <input type="text" id="nr_merchant" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-bold text-slate-900 bg-slate-50" placeholder="輸入正確店名" />
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">合作退稅平台</label>
-              <input type="text" id="nr_platform" class="w-full border rounded-lg px-2 py-1 text-xs" />
+              <label class="block text-xs font-bold text-slate-600 mb-1">合作退稅平台</label>
+              <input type="text" id="nr_platform" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800" />
             </div>
           </div>
-          <div class="grid grid-cols-3 gap-1.5">
+          <div class="grid grid-cols-3 gap-2">
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">手續費類型</label>
-              <select id="nr_fee_type" class="w-full border rounded-lg px-1.5 py-1 text-xs bg-white">
+              <label class="block text-xs font-bold text-slate-600 mb-1">手續費類型</label>
+              <select id="nr_fee_type" class="w-full border border-slate-300 rounded-xl px-2 py-2 text-xs bg-white font-semibold">
                 <option value="free">免手續費</option>
                 <option value="rate">比例抽成(%)</option>
                 <option value="fixed">單筆固定(¥)</option>
               </select>
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">費率 / 金額</label>
-              <input type="number" step="0.05" id="nr_fee_value" class="w-full border rounded-lg px-2 py-1 text-xs" />
+              <label class="block text-xs font-bold text-slate-600 mb-1">費率 / 金額</label>
+              <input type="number" step="0.05" id="nr_fee_value" class="w-full border border-slate-300 rounded-xl px-2 py-2 text-xs font-bold text-slate-900" />
             </div>
             <div>
-              <label class="block text-[10px] font-bold text-slate-500 mb-0.5">主要退款去向</label>
-              <select id="nr_refund_channel" class="w-full border rounded-lg px-1.5 py-1 text-xs bg-white">
+              <label class="block text-xs font-bold text-slate-600 mb-1">退款去向</label>
+              <select id="nr_refund_channel" class="w-full border border-slate-300 rounded-xl px-2 py-2 text-xs bg-white font-semibold">
                 <option value="信用卡">信用卡</option>
                 <option value="機場現金">機場現金</option>
                 <option value="電子支付">電子支付</option>
@@ -324,130 +316,130 @@
             </div>
           </div>
           <div>
-            <label class="block text-[10px] font-bold text-slate-500 mb-0.5">現場注意事項（中日對照）</label>
-            <input type="text" id="nr_reminders" class="w-full border rounded-lg px-2 py-1 text-xs text-rose-700 font-medium" />
+            <label class="block text-xs font-bold text-slate-600 mb-1">現場注意事項（中日對照）</label>
+            <input type="text" id="nr_reminders" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-xs text-rose-700 font-bold" />
           </div>
           <input type="hidden" id="nr_notice_url" />
-          <div class="flex gap-2">
-            <button type="button" onclick="saveScannedStoreRule(true)" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-2 rounded-lg">
+          <div class="flex gap-2 pt-1">
+            <button type="button" onclick="saveScannedStoreRule(true)" class="flex-1 bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold py-3 rounded-xl shadow-sm">
               💾 儲存規則並立即記帳
             </button>
-            <button type="button" onclick="saveScannedStoreRule(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-lg">
+            <button type="button" onclick="saveScannedStoreRule(false)" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-3 px-3.5 rounded-xl">
               僅存規則
             </button>
           </div>
         </div>
       </div>
 
-      <!-- 區塊 B：免稅櫃台「中日雙語指指通」（可展開並點選放大給店員看） -->
-      <div class="bg-amber-50/80 border border-amber-200 rounded-2xl p-3 space-y-2">
+      <!-- 免稅櫃台「中日雙語指指通」 -->
+      <div class="bg-amber-50 border border-amber-200 rounded-2xl p-3.5 space-y-2">
         <button type="button" onclick="toggleBilingualHelper()" class="w-full flex justify-between items-center text-left">
           <span class="text-xs font-extrabold text-amber-900">🗣️ 免稅櫃台指指通（點句子放大給店員看）</span>
           <span id="bilingualArrow" class="text-xs font-bold text-amber-700">展開 ▸</span>
         </button>
-        <div id="bilingualList" class="hidden space-y-1.5 pt-1"></div>
+        <div id="bilingualList" class="hidden space-y-2 pt-1"></div>
       </div>
 
-      <!-- 區塊 C：已建檔店家規則清單（可一鍵套用記帳或刪除） -->
-      <div id="savedStoreRulesSection" class="hidden space-y-1.5">
+      <!-- 已建檔店家規則清單 -->
+      <div id="savedStoreRulesSection" class="hidden space-y-2">
         <p class="text-xs font-bold text-slate-700">🏪 已建檔店家退稅規則（點擊直接開單記帳）</p>
-        <div id="savedStoreRulesList" class="space-y-1.5"></div>
+        <div id="savedStoreRulesList" class="space-y-2"></div>
       </div>
 
-      <!-- 區塊 D：結帳前退稅划算度即時試算 -->
-      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2">
+      <!-- 結帳前退稅試算 -->
+      <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2.5">
         <p class="text-xs font-bold text-slate-700">🧮 結帳前退稅划算度試算</p>
-        <div class="grid grid-cols-2 gap-2">
-          <input type="number" id="calc_tax_jpy" oninput="runPreCheckoutCalc()" class="border rounded-xl px-2.5 py-1.5 text-xs bg-white font-bold" placeholder="預計含稅金額 (¥)" />
-          <select id="calc_tax_rule" onchange="runPreCheckoutCalc()" class="border rounded-xl px-2 py-1.5 text-xs bg-white">
+        <div class="grid grid-cols-2 gap-2.5">
+          <input type="number" id="calc_tax_jpy" oninput="runPreCheckoutCalc()" class="border border-slate-300 rounded-xl px-3 py-2 text-xs bg-white font-bold" placeholder="預計含稅金額 (¥)" />
+          <select id="calc_tax_rule" onchange="runPreCheckoutCalc()" class="border border-slate-300 rounded-xl px-2.5 py-2 text-xs bg-white font-semibold">
             <option value="free:0">免手續費 (實退10%)</option>
-            <option value="rate:1.55">抽成 1.55% (百貨常見)</option>
+            <option value="rate:1.55">抽成 1.55%</option>
             <option value="fixed:330">單筆固定扣 ¥330</option>
             <option value="food8:0">8% 食品飲料</option>
           </select>
         </div>
-        <p id="calc_tax_output" class="text-[11px] text-slate-600 bg-white px-2.5 py-1.5 rounded-lg border border-slate-100">
+        <p id="calc_tax_output" class="text-xs text-slate-700 bg-white px-3 py-2.5 rounded-xl border border-slate-100 font-medium">
           輸入預計結帳金額，立刻試算扣除手續費後的實拿退稅金。
         </p>
       </div>
 
-      <!-- 區塊 E：退稅總額獨立統計 -->
-      <div class="grid grid-cols-2 gap-2 text-center">
-        <div class="bg-slate-100 rounded-xl p-2.5">
-          <p class="text-[10px] text-slate-500">免稅購物已付含稅總額</p>
-          <p id="taxTotalPaidJpy" class="text-sm font-extrabold text-slate-800 mt-0.5">¥ 0</p>
+      <!-- 退稅總額獨立統計 -->
+      <div class="grid grid-cols-2 gap-2.5 text-center">
+        <div class="bg-slate-100 rounded-2xl p-3">
+          <p class="text-[11px] text-slate-500 font-semibold">免稅購物已付含稅總額</p>
+          <p id="taxTotalPaidJpy" class="text-base font-extrabold text-slate-900 mt-1">¥ 0</p>
         </div>
-        <div class="bg-rose-50 border border-rose-200 rounded-xl p-2.5">
-          <p class="text-[10px] text-rose-600">達標預估實拿退稅淨額</p>
-          <p id="taxTotalNetRefundJpy" class="text-sm font-extrabold text-rose-700 mt-0.5">¥ 0</p>
+        <div class="bg-rose-50 border border-rose-200 rounded-2xl p-3">
+          <p class="text-[11px] text-rose-600 font-semibold">達標預估實拿退稅淨額</p>
+          <p id="taxTotalNetRefundJpy" class="text-base font-extrabold text-rose-700 mt-1">¥ 0</p>
         </div>
       </div>
 
-      <!-- 區塊 F：同店同日退稅合併追蹤與三階段狀態管理 -->
-      <div class="space-y-2">
+      <!-- 同店同日退稅追蹤清單 -->
+      <div class="space-y-2.5">
         <p class="text-xs font-bold text-slate-700">📋 同店同日退稅追蹤清單</p>
-        <div id="taxGroupList" class="space-y-2.5"></div>
+        <div id="taxGroupList" class="space-y-3"></div>
       </div>
     </div>
   </div>
 
-  <!-- 全螢幕大字卡：給日本店員看的中日雙語溝通卡 -->
-  <div id="phraseZoomModal" onclick="closePhraseZoom()" class="hidden fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-5">
-    <div onclick="event.stopPropagation()" class="bg-white w-full max-w-md rounded-3xl p-6 text-center space-y-4 shadow-2xl">
+  <!-- 全螢幕大字卡 -->
+  <div id="phraseZoomModal" onclick="closePhraseZoom()" class="hidden fixed inset-0 bg-slate-950/90 z-50 flex items-center justify-center p-6">
+    <div onclick="event.stopPropagation()" class="bg-white w-full max-w-md rounded-3xl p-7 text-center space-y-5 shadow-2xl">
       <p class="text-xs font-bold text-rose-600 tracking-wider">🇯🇵 請將此畫面出示給店員看</p>
-      <p id="zoomJpText" class="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-relaxed tracking-wide py-3 border-y border-slate-200"></p>
-      <p id="zoomZhText" class="text-sm font-medium text-slate-500"></p>
-      <button type="button" onclick="closePhraseZoom()" class="w-full bg-slate-900 text-white font-bold py-3 rounded-xl text-sm">
+      <p id="zoomJpText" class="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-relaxed tracking-wide py-4 border-y border-slate-200"></p>
+      <p id="zoomZhText" class="text-sm font-medium text-slate-600"></p>
+      <button type="button" onclick="closePhraseZoom()" class="w-full bg-slate-900 text-white font-bold py-3.5 rounded-xl text-sm">
         關閉大字卡
       </button>
     </div>
   </div>
 
-  <!-- 設定 Modal（純淨參數，無全域退稅比例預設） -->
-  <div id="settingsModal" class="hidden fixed inset-0 bg-slate-900/60 z-40 flex items-center justify-center p-4">
-    <div class="bg-white w-full max-w-md rounded-2xl p-5 shadow-2xl space-y-3.5">
-      <div class="flex justify-between items-center border-b pb-2">
-        <h3 class="text-lg font-bold">⚙️ 系統連線與匯率設定</h3>
-        <button onclick="closeSettingsModal()" class="text-slate-400 text-xl font-bold">✕</button>
+  <!-- 設定 Modal -->
+  <div id="settingsModal" class="hidden fixed inset-0 bg-slate-900/70 z-40 flex items-center justify-center p-4">
+    <div class="bg-white w-full max-w-md rounded-2xl p-6 shadow-2xl space-y-4">
+      <div class="flex justify-between items-center border-b pb-3">
+        <h3 class="text-base font-bold text-slate-900">⚙️ 系統連線與匯率設定</h3>
+        <button onclick="closeSettingsModal()" class="text-slate-400 text-xl font-bold p-1">✕</button>
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-slate-600 mb-1">Google Apps Script 部署網址 (Web App URL)</label>
-        <input type="url" id="s_gas_url" class="w-full border rounded-xl px-3 py-2 text-xs font-mono bg-slate-50" placeholder="https://script.google.com/macros/s/..." />
+        <label class="block text-xs font-bold text-slate-700 mb-1">Google Apps Script 部署網址 (Web App URL)</label>
+        <input type="url" id="s_gas_url" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-xs font-mono bg-slate-50" placeholder="https://script.google.com/macros/s/..." />
       </div>
 
       <div>
-        <label class="block text-xs font-bold text-slate-600 mb-1">單趟旅程名稱</label>
-        <input type="text" id="s_trip_name" class="w-full border rounded-xl px-3 py-2 text-sm" />
+        <label class="block text-xs font-bold text-slate-700 mb-1">單趟旅程名稱</label>
+        <input type="text" id="s_trip_name" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold" />
       </div>
 
       <div class="grid grid-cols-3 gap-2">
         <div>
-          <label class="block text-[11px] font-bold text-slate-600 mb-1">現金換匯均價</label>
-          <input type="number" step="0.0001" id="s_cash_rate" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">現金均價</label>
+          <input type="number" step="0.0001" id="s_cash_rate" class="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-sm font-semibold" />
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-slate-600 mb-1">IC卡儲值均價</label>
-          <input type="number" step="0.0001" id="s_ic_rate" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">IC卡均價</label>
+          <input type="number" step="0.0001" id="s_ic_rate" class="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-sm font-semibold" />
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-slate-600 mb-1">日幣刷卡係數</label>
-          <input type="number" step="0.0001" id="s_card_rate" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">刷卡係數</label>
+          <input type="number" step="0.0001" id="s_card_rate" class="w-full border border-slate-300 rounded-xl px-2.5 py-2 text-sm font-semibold" />
         </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-2">
+      <div class="grid grid-cols-2 gap-2.5">
         <div>
-          <label class="block text-[11px] font-bold text-slate-600 mb-1">初始日幣現金 (¥)</label>
-          <input type="number" id="s_init_cash" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
+          <label class="block text-xs font-bold text-slate-700 mb-1">初始日幣現金 (¥)</label>
+          <input type="number" id="s_init_cash" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold" />
         </div>
         <div>
-          <label class="block text-[11px] font-bold text-slate-600 mb-1">初始 IC 卡餘額 (¥)</label>
-          <input type="number" id="s_init_ic" class="w-full border rounded-xl px-2.5 py-1.5 text-sm" />
+          <label class="block text-xs font-bold text-slate-700 mb-1">初始 IC 卡 (¥)</label>
+          <input type="number" id="s_init_ic" class="w-full border border-slate-300 rounded-xl px-3.5 py-2.5 text-sm font-semibold" />
         </div>
       </div>
 
-      <button onclick="saveSettings()" class="w-full bg-slate-900 text-white font-bold py-2.5 rounded-xl mt-2">
+      <button onclick="saveSettings()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl mt-2 text-sm">
         儲存設定並同步
       </button>
     </div>
@@ -500,9 +492,9 @@
     function renderBilingualPhrases() {
       const el = document.getElementById('bilingualList');
       el.innerHTML = BILINGUAL_PHRASES.map((p, idx) => `
-        <button type="button" onclick="openPhraseZoom(${idx})" class="w-full text-left bg-white hover:bg-amber-100/60 border border-amber-200/80 rounded-xl px-3 py-2 transition">
+        <button type="button" onclick="openPhraseZoom(${idx})" class="w-full text-left bg-white hover:bg-amber-100/60 border border-amber-200/80 rounded-xl px-3.5 py-2.5 transition shadow-2xs">
           <p class="text-xs font-extrabold text-slate-900">${p.jp}</p>
-          <p class="text-[11px] text-slate-500 mt-0.5">${p.zh} <span class="text-amber-700 font-bold">⤢ 放大</span></p>
+          <p class="text-[11px] text-slate-600 mt-0.5 font-medium">${p.zh} <span class="text-amber-800 font-bold">⤢ 放大</span></p>
         </button>
       `).join('');
     }
@@ -656,8 +648,8 @@
         const pct = Math.round((val / grandTotalTwd) * 100);
         const meta = CATEGORY_META[cat] || CATEGORY_META['餐飲'];
         return `
-          <span class="inline-flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full ${meta.dot}"></span>
+          <span class="inline-flex items-center gap-1.5">
+            <span class="w-2.5 h-2.5 rounded-full ${meta.dot}"></span>
             <span>${cat} ${pct}%</span>
           </span>
         `;
@@ -690,7 +682,7 @@
       document.getElementById('txCount').textContent = `共 ${sortedTx.length} 筆`;
       const listEl = document.getElementById('txList');
       if (!sortedTx.length) {
-        listEl.innerHTML = `<div class="text-center py-8 text-slate-400 text-sm">尚無消費紀錄，點擊上方按鈕開始記帳</div>`;
+        listEl.innerHTML = `<div class="text-center py-10 text-slate-400 text-sm">尚無消費紀錄，點擊上方按鈕開始記帳</div>`;
         return;
       }
 
@@ -718,13 +710,13 @@
           const jpySub = dayStat.jpy > 0 ? `（¥${dayStat.jpy.toLocaleString()}）` : '';
           const arrow = isCollapsed ? '▸' : '▾';
           htmlBlocks.push(`
-            <button type="button" onclick="toggleDateCollapse('${dKey}')" class="w-full flex justify-between items-center pt-2.5 pb-1 px-1.5 text-left select-none active:opacity-70">
-              <span class="text-xs font-extrabold text-slate-700 flex items-center gap-1">
+            <button type="button" onclick="toggleDateCollapse('${dKey}')" class="w-full flex justify-between items-center pt-3 pb-1.5 px-1 text-left select-none active:opacity-70">
+              <span class="text-xs font-bold text-slate-700 flex items-center gap-1.5">
                 <span class="text-slate-400 text-sm">${arrow}</span>
-                <span>${dKey}</span>
-                <span class="font-normal text-slate-400">(${dayStat.count}筆)</span>
+                <span class="font-bold">${dKey}</span>
+                <span class="text-slate-400 font-normal">(${dayStat.count}筆)</span>
               </span>
-              <span class="text-xs font-bold text-slate-600">NT$ ${dayStat.twd.toLocaleString()}${jpySub}</span>
+              <span class="text-xs font-bold text-slate-700">NT$ ${dayStat.twd.toLocaleString()}${jpySub}</span>
             </button>
           `);
         }
@@ -735,30 +727,30 @@
 
         let taxTag = '';
         if (tx.computed_tax_status === '待機場海關確認') {
-          taxTag = `<span onclick="event.stopPropagation(); openTaxModal()" class="bg-rose-100 text-rose-700 text-[10px] px-1.5 py-0.5 rounded font-bold">⏳ 退¥${tx.est_refund_jpy}</span>`;
+          taxTag = `<span onclick="event.stopPropagation(); openTaxModal()" class="bg-rose-100 text-rose-700 text-[11px] px-2 py-0.5 rounded-md font-bold">⏳ 退¥${tx.est_refund_jpy}</span>`;
         } else if (tx.computed_tax_status === '海關已過關(待入帳)') {
-          taxTag = `<span onclick="event.stopPropagation(); openTaxModal()" class="bg-sky-100 text-sky-700 text-[10px] px-1.5 py-0.5 rounded font-bold">🛂 待入帳</span>`;
+          taxTag = `<span onclick="event.stopPropagation(); openTaxModal()" class="bg-sky-100 text-sky-700 text-[11px] px-2 py-0.5 rounded-md font-bold">🛂 待入帳</span>`;
         } else if (tx.computed_tax_status === '累計中(未滿¥5,500)') {
-          taxTag = `<span onclick="event.stopPropagation(); openTaxModal()" class="bg-amber-100 text-amber-800 text-[10px] px-1.5 py-0.5 rounded font-bold">差¥${tx.group_shortfall_jpy}</span>`;
+          taxTag = `<span onclick="event.stopPropagation(); openTaxModal()" class="bg-amber-100 text-amber-800 text-[11px] px-2 py-0.5 rounded-md font-bold">差¥${tx.group_shortfall_jpy}</span>`;
         } else if (tx.computed_tax_status === '已確認入帳') {
-          taxTag = `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-1.5 py-0.5 rounded font-bold">✅ 已入帳</span>`;
+          taxTag = `<span class="bg-emerald-100 text-emerald-700 text-[11px] px-2 py-0.5 rounded-md font-bold">✅ 已入帳</span>`;
         }
 
         const receiptBtn = isValidHttpUrl(tx.receipt_url)
-          ? `<a href="${tx.receipt_url.trim()}" target="_blank" onclick="event.stopPropagation()" class="text-blue-600 text-[11px] underline ml-1">憑證</a>`
+          ? `<a href="${tx.receipt_url.trim()}" target="_blank" onclick="event.stopPropagation()" class="text-blue-600 text-xs underline ml-1.5 font-medium">憑證</a>`
           : '';
 
         const isTwdOnly = (tx.amount_jpy === 0 || isTwdMethod(tx.payment_method));
         const amountHtml = isTwdOnly
-          ? `<p class="font-extrabold text-[15px] text-slate-900">NT$ ${tx.amount_twd.toLocaleString()}</p>
-             <p class="text-[10px] text-amber-600 font-medium">台幣支付</p>`
-          : `<p class="font-extrabold text-[15px] text-slate-900">¥ ${tx.amount_jpy.toLocaleString()}</p>
-             <p class="text-[11px] text-slate-400">NT$ ${tx.amount_twd.toLocaleString()}</p>`;
+          ? `<p class="font-extrabold text-base text-slate-900">NT$ ${tx.amount_twd.toLocaleString()}</p>
+             <p class="text-[11px] text-amber-600 font-semibold">台幣支付</p>`
+          : `<p class="font-extrabold text-base text-slate-900">¥ ${tx.amount_jpy.toLocaleString()}</p>
+             <p class="text-xs text-slate-400 font-medium">NT$ ${tx.amount_twd.toLocaleString()}</p>`;
 
         htmlBlocks.push(`
           <div class="relative overflow-hidden rounded-2xl bg-rose-600 shadow-xs">
             <button type="button" onclick="event.stopPropagation(); deleteTransaction('${tx.tx_id}')" class="absolute inset-y-0 right-0 w-20 flex flex-col items-center justify-center text-white font-bold text-xs">
-              <span class="text-base">🗑️</span>
+              <span class="text-lg">🗑️</span>
               <span>刪除</span>
             </button>
             <div
@@ -767,17 +759,17 @@
               ontouchmove="handleCardTouchMove(event)"
               ontouchend="handleCardTouchEnd(event)"
               onclick="handleCardClick(event, '${tx.tx_id}')"
-              class="tx-swipe-card relative bg-white px-3.5 py-2.5 border border-slate-100 rounded-2xl flex items-center justify-between gap-2.5 transition-transform duration-200 cursor-pointer active:bg-slate-50"
+              class="tx-swipe-card relative bg-white px-4 py-3 border border-slate-100 rounded-2xl flex items-center justify-between gap-3 transition-transform duration-200 cursor-pointer active:bg-slate-50"
             >
-              <div class="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-lg shrink-0">
+              <div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-xl shrink-0">
                 ${meta.icon}
               </div>
               <div class="min-w-0 flex-1">
-                <div class="flex items-center gap-1.5">
-                  <p class="font-bold text-sm text-slate-800 truncate">${tx.merchant}</p>
+                <div class="flex items-center gap-2">
+                  <p class="font-bold text-sm text-slate-900 truncate">${tx.merchant}</p>
                   ${taxTag}
                 </div>
-                <div class="text-[11px] text-slate-400 flex items-center gap-1 mt-0.5">
+                <div class="text-xs text-slate-400 flex items-center gap-1.5 mt-0.5 font-medium">
                   <span>${tx.payment_method}</span>
                   ${receiptBtn}
                 </div>
@@ -793,7 +785,6 @@
       listEl.innerHTML = htmlBlocks.join('');
     }
 
-    // 左滑刪除與點擊編輯手勢控制
     let touchStartX = 0;
     let touchStartY = 0;
     let currentSwipeOffset = 0;
@@ -861,12 +852,12 @@
       if (!file) return;
 
       if (!navigator.onLine) {
-        alert('OCR 辨識需要網路連線，離線時請直接手動設定手續費規則！');
+        alert('OCR 辨識需要網路連線！');
         event.target.value = '';
         return;
       }
 
-      showLoading('正在辨識店家退稅公告...', '自動翻譯並抓取手續費率、退稅平台與 QR 規定');
+      showLoading('正在辨識店家退稅公告...', '自動分析手續費率與退款方式');
       try {
         const compressedBase64 = await compressImage(file, 960, 0.72);
         const res = await fetch(getGasUrl(), {
@@ -883,7 +874,12 @@
 
         if (json.status === 'success') {
           const { notice_url, notice_data } = json.data;
-          document.getElementById('nr_merchant').value = notice_data.merchant || '';
+          // 過濾掉誤判的「今日」字眼
+          let cleanMerchant = notice_data.merchant || '';
+          if (cleanMerchant.includes('今日') || cleanMerchant.length < 2) {
+            cleanMerchant = '';
+          }
+          document.getElementById('nr_merchant').value = cleanMerchant;
           document.getElementById('nr_platform').value = notice_data.platform || '店家自有 / 一般退稅';
           document.getElementById('nr_fee_type').value = notice_data.fee_type || 'free';
           document.getElementById('nr_fee_value').value = notice_data.fee_value || 0;
@@ -896,7 +892,7 @@
         }
       } catch (err) {
         hideLoading();
-        alert('公告辨識連線異常：' + err.message);
+        alert('辨識連線異常：' + err.message);
       } finally {
         event.target.value = '';
       }
@@ -905,7 +901,7 @@
     async function saveScannedStoreRule(openEntryAfter) {
       const merchant = document.getElementById('nr_merchant').value.trim();
       if (!merchant) {
-        alert('請先填入店家名稱，以便之後記帳自動套用！');
+        alert('請填入正確的店家名稱！');
         document.getElementById('nr_merchant').focus();
         return;
       }
@@ -1017,63 +1013,46 @@
         captureGps();
       }
 
-      const sourceLabel = sourceType === 'gallery' ? '相簿照片' : '拍攝憑證';
-      showLoading(`壓縮${sourceLabel}中...`, '最佳化傳輸體積以加速辨識');
-
+      showLoading('壓縮圖片中...', '最佳化傳輸體積以加速辨識');
       let compressedBase64 = '';
       try {
         compressedBase64 = await compressImage(file, 768, 0.65);
-
         if (!navigator.onLine) {
           hideLoading();
           openManualModal(sourceType === 'camera');
           document.getElementById('receiptPreview').src = compressedBase64;
           document.getElementById('previewBox').classList.remove('hidden');
-          alert('目前處於離線狀態，請先手動輸入金額！');
+          alert('離線狀態，請手動輸入金額！');
           return;
         }
 
-        const kbSize = Math.round((compressedBase64.length * 3) / 4 / 1024);
-        showLoading(`Google Drive OCR 辨識中 (${kbSize} KB)...`, '自動判讀台灣發票與日本收據');
-
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 25000);
-
+        showLoading('Google Drive OCR 辨識中...', '自動判讀發票或收據');
         const res = await fetch(getGasUrl(), {
           method: 'POST',
           headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          signal: controller.signal,
           body: JSON.stringify({
             action: 'ocr_receipt',
             image_base64: compressedBase64,
             mime_type: 'image/jpeg'
           })
         });
-        clearTimeout(timeoutId);
-
         const json = await res.json();
         hideLoading();
 
         if (json.status === 'success') {
           const { receipt_url, ocr_data } = json.data;
           openManualModal(sourceType === 'camera');
-          const regionLabel = ocr_data.region === 'TW' ? '🇹🇼 台灣發票/收據' : '🇯🇵 日本收據';
-          document.getElementById('modalTitle').textContent = `🧾 消費明細 (${regionLabel})`;
+          document.getElementById('modalTitle').textContent = ocr_data.region === 'TW' ? '🧾 消費明細 (台灣)' : '🧾 消費明細 (日本)';
           document.getElementById('receiptPreview').src = compressedBase64;
           document.getElementById('previewBox').classList.remove('hidden');
 
           document.getElementById('f_receipt_url').value = isValidHttpUrl(receipt_url) ? receipt_url : '';
           document.getElementById('f_merchant').value = ocr_data.merchant || '';
-
           selectCategoryPill(ocr_data.category || '餐飲', false);
           selectPaymentPill(ocr_data.region === 'TW' ? '台幣信用卡' : '日幣現金');
 
-          if (ocr_data.amount > 0) {
-            document.getElementById('f_amount').value = ocr_data.amount;
-          }
-          if (ocr_data.date && /^\d{4}-\d{2}-\d{2}$/.test(ocr_data.date)) {
-            document.getElementById('f_date').value = ocr_data.date;
-          }
+          if (ocr_data.amount > 0) document.getElementById('f_amount').value = ocr_data.amount;
+          if (ocr_data.date && /^\d{4}-\d{2}-\d{2}$/.test(ocr_data.date)) document.getElementById('f_date').value = ocr_data.date;
 
           if (ocr_data.region === 'JP' && ocr_data.tax_eligible) {
             document.getElementById('f_tax_status').value = '待機場海關確認';
@@ -1083,21 +1062,17 @@
             document.getElementById('f_tax_status').value = '不可退稅';
             document.getElementById('f_non_taxable').value = 0;
           }
-
           updateTaxDetailVisibility();
           handleAmountInput();
         } else {
-          alert('OCR 辨識失敗，請改為手動輸入：\n' + json.message);
+          alert('OCR 辨識失敗，請手動輸入：\n' + json.message);
           openManualModal(sourceType === 'camera');
           document.getElementById('receiptPreview').src = compressedBase64;
           document.getElementById('previewBox').classList.remove('hidden');
         }
       } catch (err) {
         hideLoading();
-        const msg = err.name === 'AbortError' 
-          ? '網路上傳逾時（超過 25 秒），已保留收據照片，請直接手動輸入金額！' 
-          : '連線異常：' + err.message;
-        alert(msg);
+        alert('連線異常：' + err.message);
         openManualModal(sourceType === 'camera');
         if (compressedBase64) {
           document.getElementById('receiptPreview').src = compressedBase64;
@@ -1137,9 +1112,9 @@
       document.getElementById('f_category').value = cat;
       document.querySelectorAll('.cat-pill').forEach(btn => {
         if (btn.dataset.cat === cat) {
-          btn.className = 'cat-pill border rounded-xl py-2 px-1 text-xs font-bold flex flex-col items-center justify-center transition bg-slate-900 text-white border-slate-900 shadow-xs';
+          btn.className = 'cat-pill border rounded-xl py-2.5 px-1 text-xs font-bold flex flex-col items-center justify-center transition bg-slate-900 text-white border-slate-900 shadow-xs';
         } else {
-          btn.className = 'cat-pill border rounded-xl py-2 px-1 text-xs font-bold flex flex-col items-center justify-center transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100';
+          btn.className = 'cat-pill border rounded-xl py-2.5 px-1 text-xs font-bold flex flex-col items-center justify-center transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100';
         }
       });
       if (autoTax) autoDetectTaxCategory();
@@ -1152,14 +1127,14 @@
       document.querySelectorAll('.pay-pill').forEach(btn => {
         if (btn.dataset.pay === method) {
           if (isTwd) {
-            btn.className = 'pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition bg-amber-600 text-white border-amber-600 shadow-xs';
+            btn.className = 'pay-pill border rounded-xl py-2.5 px-3 text-xs font-bold transition bg-amber-600 text-white border-amber-600 shadow-xs';
           } else if (isIc) {
-            btn.className = 'pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition bg-sky-600 text-white border-sky-600 shadow-xs';
+            btn.className = 'pay-pill border rounded-xl py-2.5 px-3 text-xs font-bold transition bg-sky-600 text-white border-sky-600 shadow-xs';
           } else {
-            btn.className = 'pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition bg-blue-600 text-white border-blue-600 shadow-xs';
+            btn.className = 'pay-pill border rounded-xl py-2.5 px-3 text-xs font-bold transition bg-blue-600 text-white border-blue-600 shadow-xs';
           }
         } else {
-          btn.className = 'pay-pill border rounded-xl py-2 px-2 text-xs font-bold transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100';
+          btn.className = 'pay-pill border rounded-xl py-2.5 px-3 text-xs font-bold transition bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100';
         }
       });
       togglePaymentFields();
@@ -1326,13 +1301,13 @@
 
       if (isTwdMethod(method)) {
         amountLabel.textContent = '台幣金額 (NT$)';
-        amountInput.placeholder = '請輸入台幣金額，例如 12500';
+        amountInput.placeholder = '例如 12500';
         amountInput.classList.remove('text-blue-600');
         amountInput.classList.add('text-amber-600');
         taxSection.classList.add('hidden');
       } else {
         amountLabel.textContent = '日幣金額 (¥)';
-        amountInput.placeholder = '請輸入日幣金額，例如 1580';
+        amountInput.placeholder = '例如 1580';
         amountInput.classList.remove('text-amber-600');
         amountInput.classList.add('text-blue-600');
         taxSection.classList.remove('hidden');
@@ -1402,15 +1377,15 @@
 
       if (!navigator.onLine) {
         if (txId) {
-          alert('離線狀態無法修改既有雲端紀錄，請在有網路時編輯！');
+          alert('離線狀態無法修改！');
           return;
         }
         saveToOfflineQueue(payload);
-        alert('目前無網路，已存入本機離線佇列，恢復網路後請點擊上方「立即上傳」！');
+        alert('已存入離線佇列，恢復網路後可上傳！');
         return;
       }
 
-      showLoading(txId ? '正在更新消費紀錄...' : '正在寫入 Google Sheets 帳本...');
+      showLoading(txId ? '正在更新消費紀錄...' : '正在寫入 Google Sheets...');
       try {
         const res = await fetch(getGasUrl(), {
           method: 'POST',
@@ -1429,7 +1404,7 @@
         hideLoading();
         if (!txId) {
           saveToOfflineQueue(payload);
-          alert('連線不穩，已自動轉存離線佇列！');
+          alert('連線不穩，已轉存離線佇列！');
         } else {
           alert('更新失敗：' + err.message);
         }
@@ -1437,8 +1412,8 @@
     }
 
     async function deleteTransaction(txId) {
-      if (!confirm('確定要刪除這筆消費紀錄嗎？刪除後將自動重新計算總花費、餘額與同店退稅累計。')) return;
-      showLoading('正在刪除紀錄並重算...');
+      if (!confirm('確定要刪除這筆消費紀錄嗎？')) return;
+      showLoading('正在刪除紀錄...');
       try {
         const res = await fetch(getGasUrl(), {
           method: 'POST',
@@ -1466,17 +1441,17 @@
       const outEl = document.getElementById('calc_tax_output');
 
       if (amt <= 0) {
-        outEl.innerHTML = '輸入預計結帳金額，立刻試算扣除手續費後的實拿退稅金。';
+        outEl.innerHTML = '輸入預計結帳金額，立刻試算實拿退稅金。';
         return;
       }
       if (amt < 5500) {
-        outEl.innerHTML = `未滿免稅門檻，尚差 <strong class="text-amber-700">¥${(5500 - amt).toLocaleString()}</strong>（同店當日可累計）。`;
+        outEl.innerHTML = `未滿免稅門檻，尚差 <strong class="text-amber-700">¥${(5500 - amt).toLocaleString()}</strong>。`;
         return;
       }
       const net = computeClientNetTax(amt, fType, fVal);
       const effPct = ((net / amt) * 100).toFixed(1);
       if (net < 250) {
-        outEl.innerHTML = `預估實拿 <strong class="text-rose-700">¥${net}</strong>（僅 ${effPct}%）— ⚠️ 扣手續費後所剩無幾，建議不必為湊免稅硬買或直接拆單自用！`;
+        outEl.innerHTML = `預估實拿 <strong class="text-rose-700">¥${net}</strong>（僅 ${effPct}%）— ⚠️ 手續費偏高，建議免強湊單或拆單自用！`;
       } else {
         outEl.innerHTML = `預估實拿 <strong class="text-emerald-700">¥${net.toLocaleString()}</strong>（實質退稅率 <strong>${effPct}%</strong>）。`;
       }
@@ -1498,12 +1473,12 @@
             ? '免手續費'
             : (r.fee_type === 'fixed' ? `固定扣¥${r.fee_value}` : `抽成${r.fee_value}%`);
           return `
-            <div class="flex items-center justify-between gap-2 bg-rose-50/60 border border-rose-200 rounded-xl px-3 py-2">
+            <div class="flex items-center justify-between gap-2.5 bg-rose-50/80 border border-rose-200 rounded-2xl px-3.5 py-3">
               <div onclick="applyStoreRuleToNewTx('${r.merchant.replace(/'/g, "\\'")}')" class="min-w-0 flex-1 cursor-pointer">
-                <p class="font-bold text-xs text-slate-800 truncate">${r.merchant} <span class="text-[10px] font-normal text-rose-700">(${r.platform}・${feeDesc})</span></p>
-                <p class="text-[10px] text-slate-500 truncate">${r.reminders || '點擊直接以此店規則記帳'}</p>
+                <p class="font-bold text-xs text-slate-900 truncate">${r.merchant} <span class="text-[11px] font-normal text-rose-700">(${r.platform}・${feeDesc})</span></p>
+                <p class="text-[11px] text-slate-500 truncate mt-0.5">${r.reminders || '點擊以此店規則記帳'}</p>
               </div>
-              <button type="button" onclick="deleteStoreRule('${r.rule_id}')" class="text-slate-400 hover:text-rose-600 text-xs px-1.5">✕</button>
+              <button type="button" onclick="deleteStoreRule('${r.rule_id}')" class="text-slate-400 hover:text-rose-600 text-xs px-2 py-1 font-bold">✕</button>
             </div>
           `;
         }).join('');
@@ -1524,8 +1499,8 @@
 
       listEl.innerHTML = groups.map(g => {
         const badge = g.is_qualified
-          ? `<span class="bg-emerald-100 text-emerald-700 text-[10px] px-2 py-0.5 rounded font-bold">✅ 已滿¥5,500門檻</span>`
-          : `<span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded font-bold">⏳ 尚差 ¥${g.shortfall_jpy.toLocaleString()}</span>`;
+          ? `<span class="bg-emerald-100 text-emerald-700 text-xs px-2.5 py-1 rounded-lg font-bold">✅ 已滿¥5,500門檻</span>`
+          : `<span class="bg-amber-100 text-amber-800 text-xs px-2.5 py-1 rounded-lg font-bold">⏳ 尚差 ¥${g.shortfall_jpy.toLocaleString()}</span>`;
 
         const qrBtnClass = g.qr_registered
           ? 'bg-emerald-600 text-white border-emerald-600'
@@ -1537,35 +1512,35 @@
         let stageBtn = '';
         if (g.is_qualified) {
           if (g.tax_status === '待機場海關確認') {
-            stageBtn = `<button onclick='updateGroupMeta(${JSON.stringify(g.tx_ids)}, {tax_free_status: "海關已過關(待入帳)"})' class="w-full mt-2 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold py-2 rounded-lg">🛂 標記：機場海關已過關（保留收據等入帳）</button>`;
+            stageBtn = `<button onclick='updateGroupMeta(${JSON.stringify(g.tx_ids)}, {tax_free_status: "海關已過關(待入帳)"})' class="w-full mt-2.5 bg-sky-600 hover:bg-sky-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-2xs">🛂 標記：機場海關已過關</button>`;
           } else if (g.tax_status === '海關已過關(待入帳)') {
-            stageBtn = `<button onclick='confirmGroupFinalRefund(${JSON.stringify(g.tx_ids)}, ${g.total_est_refund_jpy})' class="w-full mt-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2 rounded-lg">✅ 確認退款已實際入帳 (結案 ¥${g.total_est_refund_jpy.toLocaleString()})</button>`;
+            stageBtn = `<button onclick='confirmGroupFinalRefund(${JSON.stringify(g.tx_ids)}, ${g.total_est_refund_jpy})' class="w-full mt-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold py-2.5 rounded-xl shadow-2xs">✅ 確認退款已實際入帳 (¥${g.total_est_refund_jpy.toLocaleString()})</button>`;
           }
         }
 
         return `
-          <div class="border border-slate-200 rounded-xl p-3 bg-slate-50 space-y-2">
+          <div class="border border-slate-200 rounded-2xl p-3.5 bg-slate-50 space-y-2.5 shadow-2xs">
             <div class="flex justify-between items-start gap-2">
               <div>
-                <p class="font-bold text-sm text-slate-800">${g.merchant}</p>
-                <p class="text-[11px] text-slate-500">${g.date} • 共 ${g.tx_ids.length} 筆合併</p>
+                <p class="font-bold text-sm text-slate-900">${g.merchant}</p>
+                <p class="text-xs text-slate-500 mt-0.5">${g.date} • 共 ${g.tx_ids.length} 筆合併</p>
               </div>
               ${badge}
             </div>
 
-            <div class="flex justify-between items-center text-xs bg-white p-2 rounded-lg border border-slate-100">
+            <div class="flex justify-between items-center text-xs bg-white p-2.5 rounded-xl border border-slate-100 font-semibold">
               <span>有效含稅：<strong>¥${g.total_eligible_jpy.toLocaleString()}</strong></span>
               <span class="text-rose-600 font-bold">預估實拿：¥${g.total_est_refund_jpy.toLocaleString()}</span>
             </div>
 
-            <div class="flex flex-wrap gap-1.5 text-[10px] font-bold">
-              <button type="button" onclick='cycleRefundChannel(${JSON.stringify(g.tx_ids)}, "${g.refund_channel}")' class="bg-white border border-slate-300 text-slate-700 px-2 py-1 rounded-lg">
+            <div class="flex flex-wrap gap-1.5 text-xs font-bold">
+              <button type="button" onclick='cycleRefundChannel(${JSON.stringify(g.tx_ids)}, "${g.refund_channel}")' class="bg-white border border-slate-300 text-slate-700 px-2.5 py-1.5 rounded-xl">
                 💳 退：${g.refund_channel}
               </button>
-              <button type="button" onclick='updateGroupMeta(${JSON.stringify(g.tx_ids)}, {qr_registered: ${!g.qr_registered}})' class="border px-2 py-1 rounded-lg ${qrBtnClass}">
+              <button type="button" onclick='updateGroupMeta(${JSON.stringify(g.tx_ids)}, {qr_registered: ${!g.qr_registered}})' class="border px-2.5 py-1.5 rounded-xl ${qrBtnClass}">
                 ${qrText}
               </button>
-              <button type="button" onclick='updateGroupMeta(${JSON.stringify(g.tx_ids)}, {luggage_type: "${g.luggage_type === '隨身' ? '託運' : '隨身'}"})' class="bg-white border border-slate-300 text-slate-700 px-2 py-1 rounded-lg">
+              <button type="button" onclick='updateGroupMeta(${JSON.stringify(g.tx_ids)}, {luggage_type: "${g.luggage_type === '隨身' ? '託運' : '隨身'}"})' class="bg-white border border-slate-300 text-slate-700 px-2.5 py-1.5 rounded-xl">
                 ${lugText}
               </button>
             </div>
@@ -1604,7 +1579,7 @@
     }
 
     async function confirmGroupFinalRefund(txIds, refundAmt) {
-      if (!confirm(`確認 ¥${refundAmt.toLocaleString()} 退稅款已實際入帳？確認後將從本趟總花費扣除並正式結案。`)) return;
+      if (!confirm(`確認 ¥${refundAmt.toLocaleString()} 退稅款已實際入帳？確認後將正式結案。`)) return;
       await updateGroupMeta(txIds, { tax_free_status: '已確認入帳' });
     }
 
@@ -1665,7 +1640,7 @@
     async function saveSettings() {
       const gasUrl = document.getElementById('s_gas_url').value.trim();
       if (!gasUrl) {
-        alert('請填入 Google Apps Script Web App 網址');
+        alert('請填入 Web App 網址');
         return;
       }
       localStorage.setItem('JP_PWA_GAS_URL', gasUrl);
