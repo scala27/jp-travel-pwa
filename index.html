@@ -224,7 +224,7 @@
     </div>
   </div>
 
-  <!-- 2027 日本退稅新制 Modal（直式注意事項 + 專家購買決策建議 + 熱門店名快選） -->
+  <!-- 2027 日本退稅新制 Modal（無重複注意事項 + 依店家類型客製化購買決策建議） -->
   <div id="taxModal" class="hidden fixed inset-0 bg-slate-900/70 z-40 flex items-end sm:items-center justify-center">
     <div class="bg-white w-full max-w-md rounded-t-3xl sm:rounded-2xl p-6 max-h-[92vh] overflow-y-auto shadow-2xl space-y-4">
       <div class="flex justify-between items-center border-b pb-3">
@@ -239,7 +239,7 @@
       <div class="bg-gradient-to-r from-rose-600 to-pink-600 text-white rounded-2xl p-4 shadow-sm space-y-3">
         <div>
           <p class="text-sm font-extrabold">📷 進店先拍退稅公告（OCR 判讀規則）</p>
-          <p class="text-xs text-rose-100 mt-0.5">拍攝店內立牌，自動抓費率並給出購買與退稅建議</p>
+          <p class="text-xs text-rose-100 mt-0.5">拍攝店內立牌，自動抓費率並依店家類型給出購買建議</p>
         </div>
         <div class="grid grid-cols-2 gap-2.5">
           <label class="bg-white text-rose-700 active:bg-rose-50 rounded-xl py-3 px-3 text-xs font-extrabold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs">
@@ -252,7 +252,7 @@
           </label>
         </div>
 
-        <!-- OCR 判讀結果確認卡（直式條列 + 熱門店家快選 + 專家決策建議） -->
+        <!-- OCR 判讀結果確認卡 -->
         <div id="noticeResultBox" class="hidden bg-white text-slate-900 rounded-2xl p-4 space-y-3.5 shadow-lg">
           <div class="flex justify-between items-center border-b pb-2">
             <span class="text-xs font-extrabold text-rose-700">✨ 公告判讀結果與購買決策</span>
@@ -261,8 +261,8 @@
 
           <!-- 店家名稱 + 沖繩常見店家一鍵快選 -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600">店家名稱（可點下方快選或手動修改）</label>
-            <input type="text" id="nr_merchant" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 bg-slate-50" placeholder="輸入或點選下方店名" />
+            <label class="block text-xs font-bold text-slate-600">店家名稱（點選下方快選可即時切換店家建議）</label>
+            <input type="text" id="nr_merchant" oninput="updateSmartDecisionAdvice()" class="w-full border border-slate-300 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 bg-slate-50" placeholder="輸入或點選下方店名" />
             <div class="flex flex-wrap gap-1.5 pt-0.5">
               <button type="button" onclick="setNoticeMerchant('PARCO CITY')" class="bg-slate-100 hover:bg-rose-100 text-slate-700 text-[11px] font-bold px-2.5 py-1 rounded-lg">PARCO CITY</button>
               <button type="button" onclick="setNoticeMerchant('唐吉訶德')" class="bg-slate-100 hover:bg-rose-100 text-slate-700 text-[11px] font-bold px-2.5 py-1 rounded-lg">唐吉訶德</button>
@@ -301,18 +301,24 @@
             <input type="text" id="nr_platform" class="w-full border border-slate-300 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700" />
           </div>
 
-          <!-- 直式多行條列顯示注意事項（徹底取代橫向捲動 input） -->
+          <!-- 現場注意事項（單一乾淨直式條列，編輯框預設隱藏避免重複） -->
           <div class="space-y-1.5">
-            <label class="block text-xs font-bold text-slate-600">📋 現場注意事項（直式完整顯示）</label>
+            <div class="flex justify-between items-center">
+              <label class="text-xs font-bold text-slate-600">📋 現場注意事項</label>
+              <button type="button" id="toggleRemindersBtn" onclick="toggleRemindersEdit()" class="text-[11px] font-bold text-slate-500 hover:text-rose-600">✏️ 修改</button>
+            </div>
             <div id="nr_reminders_list" class="bg-rose-50/80 border border-rose-200 rounded-xl p-3 space-y-1.5 text-xs text-rose-900 font-medium leading-relaxed"></div>
-            <textarea id="nr_reminders" rows="2" oninput="renderRemindersBulletList()" class="w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 bg-slate-50" placeholder="可在此補充或修改注意事項"></textarea>
+            <textarea id="nr_reminders" rows="3" oninput="renderRemindersBulletList()" class="hidden w-full border border-slate-300 rounded-xl px-3 py-2 text-xs text-slate-800 bg-white" placeholder="每行輸入一條注意事項"></textarea>
           </div>
 
-          <!-- 💡 專家購買與退稅決策建議 -->
+          <!-- 💡 依店家類型動態產生的購買與退稅建議 -->
           <div class="bg-blue-50 border border-blue-200 rounded-2xl p-3.5 space-y-2">
-            <p class="text-xs font-extrabold text-blue-950 flex items-center gap-1">
-              <span>💡</span><span>這家店怎麼買最划算？（行動與退稅建議）</span>
-            </p>
+            <div class="flex justify-between items-center gap-2">
+              <p class="text-xs font-extrabold text-blue-950 flex items-center gap-1">
+                <span>💡</span><span>這家店怎麼買最划算？</span>
+              </p>
+              <span id="storeCategoryTag" class="bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">一般商店</span>
+            </div>
             <ul id="smartDecisionList" class="space-y-1.5 text-xs text-blue-900 leading-relaxed list-disc pl-4"></ul>
           </div>
 
@@ -475,6 +481,16 @@
 
     function setNoticeMerchant(name) {
       document.getElementById('nr_merchant').value = name;
+      updateSmartDecisionAdvice();
+    }
+
+    function toggleRemindersEdit() {
+      const textarea = document.getElementById('nr_reminders');
+      const btn = document.getElementById('toggleRemindersBtn');
+      const isHidden = textarea.classList.contains('hidden');
+      textarea.classList.toggle('hidden', !isHidden);
+      btn.textContent = isHidden ? '✓ 完成' : '✏️ 修改';
+      if (isHidden) textarea.focus();
     }
 
     function renderRemindersBulletList() {
@@ -493,32 +509,77 @@
       `).join('');
     }
 
+    function classifyJapaneseStore(merchantName) {
+      const name = String(merchantName || '');
+      if (/松本清|大國|鶴羽|SUNDRUG|札幌藥妝|SATUDORA|藥妝|薬局|DRUG|COSME/i.test(name)) return 'drugstore';
+      if (/唐吉訶德|DON\s*QUIJOTE|ドンキ/i.test(name)) return 'donki';
+      if (/BIC|YODOBASHI|電器|CAMERA|山田電機|EDION/i.test(name)) return 'electronics';
+      if (/PARCO|AEON|SAN-A|琉貿|RYUBO|ASHIBINAA|IIAS|百貨|OUTLET|MALL/i.test(name)) return 'mall';
+      return 'general';
+    }
+
     function updateSmartDecisionAdvice() {
+      const merchant = document.getElementById('nr_merchant').value.trim();
       const feeType = document.getElementById('nr_fee_type').value;
       const feeVal = Number(document.getElementById('nr_fee_value').value) || 0;
       const channel = document.getElementById('nr_refund_channel').value;
       const reminders = document.getElementById('nr_reminders').value || '';
+      const storeType = classifyJapaneseStore(merchant);
+
+      const tagEl = document.getElementById('storeCategoryTag');
       const listEl = document.getElementById('smartDecisionList');
       const tips = [];
 
-      if (feeType === 'free') {
-        tips.push('<strong>划算度極高（免手續費）</strong>：實退完整 10% 稅額（買 ¥10,000 實退 ¥909），藥妝、零食或高單價商品都非常建議集中在此店購買。');
-      } else if (feeType === 'rate') {
-        const netPct = (9.09 - feeVal).toFixed(1);
-        tips.push(`<strong>百貨抽成制（實退約 ${netPct}%）</strong>：買 ¥10,000 扣完手續費實退約 ¥${Math.round(909 - 100 * feeVal)}。日系服飾、專櫃精品在這裡買很划算；但若只是買幾千日圓的開架藥妝，去免手續費藥妝店買會更省。`);
-      } else if (feeType === 'fixed') {
-        tips.push(`<strong>固定扣 ¥${feeVal} 手續費</strong>：如果只買剛好 ¥5,500（退稅 ¥500），扣掉 ¥${feeVal} 後只剩 ¥${Math.max(0, 500 - feeVal)}！建議同天多買幾樣湊到 ¥15,000 以上再辦退稅才划算。`);
+      if (storeType === 'drugstore') {
+        tagEl.textContent = '💊 藥妝店策略';
+        if (feeType === 'free') {
+          tips.push('<strong>藥妝採購首選（0% 免手續費）</strong>：實退完整 10% 消費稅（買 ¥10,000 實退 ¥909），常備藥、防曬、開架彩妝與保健食品非常適合在此店一次買齊。');
+        } else if (feeType === 'rate') {
+          const netPct = (9.09 - feeVal).toFixed(1);
+          tips.push(`<strong>本店藥妝有抽成（扣 ${feeVal}%，實退約 ${netPct}%）</strong>：多數連鎖藥妝店為免手續費；若此分店需抽成，建議先確認是否有 3%～7% 遊客折扣券可折抵，或改去附近免手續費分店採購。`);
+        } else {
+          tips.push(`<strong>單筆固定扣 ¥${feeVal} 手續費</strong>：藥妝單價較低，若只買剛好 ¥5,500 會被扣掉大半退稅金，建議同日集中買滿 ¥10,000 以上再辦退稅。`);
+        }
+        tips.push('<strong>湊單技巧</strong>：若結帳差幾百日圓滿 ¥5,500，可順手拿口罩、休足時間、喉糖或防蚊液等消耗品補足門檻。');
+      } else if (storeType === 'mall') {
+        tagEl.textContent = '🏬 百貨／商場策略';
+        if (feeType === 'rate') {
+          const netPct = (9.09 - feeVal).toFixed(1);
+          tips.push(`<strong>商場平台抽成制（實退約 ${netPct}%）</strong>：買 ¥10,000 扣完 ${feeVal}% 手續費實退約 ¥${Math.round(909 - 100 * feeVal)}。日系服飾、專櫃精品、運動品牌與伴手禮在這裡買很划算；但開架藥妝建議留到免手續費藥妝店買更省。`);
+        } else if (feeType === 'free') {
+          tips.push('<strong>難得的免手續費商場</strong>：無平台抽成，買服飾、生活雜貨與伴手禮都能實拿完整 10% 退稅。');
+        } else {
+          tips.push(`<strong>商場固定扣 ¥${feeVal} 手續費</strong>：建議把同日各專櫃收據集中到退稅櫃台一次辦理，避免逐筆被扣手續費。`);
+        }
+        tips.push('<strong>跨櫃合併優勢</strong>：館內多數專櫃當日消費可合併累計滿 ¥5,500，結帳前先確認該專櫃是否參與全館統一退稅。');
+      } else if (storeType === 'donki') {
+        tagEl.textContent = '🐧 綜合折扣賣場';
+        tips.push('<strong>一站式湊單最方便</strong>：涵蓋藥妝、零食、家電與雜貨，極容易同店當日湊滿 ¥5,500，且通常免退稅手續費。');
+        tips.push('<strong>優惠券疊加</strong>：結帳前先開啟電子折扣券（滿 ¥10,000 或 ¥30,000 另有折扣），可與免稅同時併用。');
+      } else if (storeType === 'electronics') {
+        tagEl.textContent = '📷 家電量販策略';
+        tips.push('<strong>高單價商品最划算</strong>：吹風機、美容儀、相機與 3C 配件單價高，退稅金額最有感。');
+        tips.push('<strong>免稅＋折扣券併用</strong>：結帳時主動出示觀光客專屬優惠券，通常可在免稅基礎上再享 5%～7% 折扣。');
+      } else {
+        tagEl.textContent = '🏪 一般商店策略';
+        if (feeType === 'free') {
+          tips.push('<strong>免手續費商店</strong>：實退完整 10% 消費稅（買 ¥10,000 實退 ¥909），只要當日累計滿 ¥5,500 就非常推薦辦理退稅。');
+        } else if (feeType === 'rate') {
+          const netPct = (9.09 - feeVal).toFixed(1);
+          tips.push(`<strong>抽成 ${feeVal}%（實退約 ${netPct}%）</strong>：買 ¥10,000 實退約 ¥${Math.round(909 - 100 * feeVal)}，單筆金額越高越划算。`);
+        } else {
+          tips.push(`<strong>固定扣 ¥${feeVal} 手續費</strong>：建議當日集中消費超過 ¥10,000 再辦理退稅，避免小額退稅被手續費吃掉。`);
+        }
       }
 
       if (reminders.includes('QR')) {
-        tips.push('<strong>記得線上登記</strong>：結帳拿到收據後，務必當天用手機掃收據上的 QR Code 綁定護照與信用卡，否則到機場海關會無法退稅。');
+        tips.push('<strong>當日掃碼登記</strong>：拿到收據後務必當天掃描 QR Code 完成線上綁定，避免到機場無法核銷。');
       }
       if (channel === '信用卡') {
-        tips.push('<strong>信用卡退款提醒</strong>：離境過海關確認後不會當場拿現金，稅款約 2～6 週退回原刷卡帳單，收據務必保留到入帳為止。');
+        tips.push('<strong>信用卡入帳時程</strong>：離境過海關確認後，稅款約 2～6 週退回原刷卡帳單，請保留收據至入帳。');
       } else if (channel === '機場現金') {
-        tips.push('<strong>機場領現金提醒</strong>：回程請提早 30 分鐘到機場，先過海關確認商品後，再去指定退稅櫃台領取日幣現金。');
+        tips.push('<strong>機場現金領取</strong>：回程請預留時間先過海關確認，再到指定櫃台領取日幣現金。');
       }
-      tips.push('<strong>拆單與打包原則</strong>：晚上在飯店就要吃掉的飲料零食，請與要帶回台灣的伴手禮分開結帳；液體超過 100ml 的退稅品放託運行李，並記得在航空公司櫃台託運前先去海關申報。');
 
       listEl.innerHTML = tips.map(t => `<li>${t}</li>`).join('');
     }
@@ -855,6 +916,10 @@
           document.getElementById('nr_refund_channel').value = notice_data.refund_channel || '信用卡';
           document.getElementById('nr_reminders').value = notice_data.reminders || '';
           document.getElementById('nr_notice_url').value = isValidHttpUrl(notice_url) ? notice_url : '';
+
+          // 確保編輯框預設收合，避免文字重複顯示
+          document.getElementById('nr_reminders').classList.add('hidden');
+          document.getElementById('toggleRemindersBtn').textContent = '✏️ 修改';
 
           renderRemindersBulletList();
           updateSmartDecisionAdvice();
@@ -1372,7 +1437,7 @@
       const net = computeClientNetTax(amt, fType, fVal);
       const effPct = ((net / amt) * 100).toFixed(1);
       if (net < 250) {
-        outEl.innerHTML = `預估實拿 <strong class="text-rose-700">¥${net}</strong>（僅 ${effPct}%）— ⚠️ 手續費偏高，不必硬湊免稅或可直接拆單自用！`;
+        outEl.innerHTML = `預估實拿 <strong class="text-rose-700">¥${net}</strong>（僅 ${effPct}%）— ⚠️ 手續費偏高，不必硬湊免稅！`;
       } else {
         outEl.innerHTML = `預估實拿 <strong class="text-emerald-700">¥${net.toLocaleString()}</strong>（實質退稅率 <strong>${effPct}%</strong>）。`;
       }
